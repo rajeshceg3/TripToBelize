@@ -440,12 +440,12 @@
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
                 
                 // We now place our beacons onto the canvas.
-                locations.forEach(location => {
-                    const icon = L.divIcon({
-                        className: 'leaflet-marker-icon',
-                        iconSize: [20, 20]
-                    });
+                const icon = L.divIcon({
+                    className: 'leaflet-marker-icon',
+                    iconSize: [20, 20]
+                });
 
+                locations.forEach(location => {
                     const marker = L.marker(location.coords, { icon: icon }).addTo(map);
                     
                     marker.on('click', () => {
