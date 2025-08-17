@@ -89,6 +89,52 @@
             pointer-events: none;
         }
 
+        #constellation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0;
+            animation: fade-in 2s ease 1s forwards;
+        }
+
+        #filter-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background-color: rgba(0, 26, 41, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px;
+            border-radius: 20px;
+            border: 1px solid rgba(127, 255, 212, 0.2);
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            animation: fade-in 1s ease 2s forwards;
+        }
+
+        .filter-btn {
+            background-color: transparent;
+            border: 1px solid var(--glow-cyan);
+            color: var(--glow-cyan);
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+            font-family: var(--font-family);
+            font-weight: 400;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background-color: var(--glow-cyan);
+            color: var(--abyss-blue);
+        }
+
         @keyframes fade-in {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -124,9 +170,14 @@
             background-color: rgba(127, 255, 212, 0.7); /* Aquamarine */
             box-shadow: 0 0 12px 2px var(--glow-cyan), 0 0 0 4px rgba(0, 26, 41, 0.7);
             animation: pulse 2.5s infinite cubic-bezier(0.45, 0.05, 0.55, 0.95);
-            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
         }
         
+        .leaflet-marker-icon.dimmed {
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
         .leaflet-marker-icon.active {
             transform: scale(1.5);
             animation-play-state: paused;
@@ -230,9 +281,24 @@
             transition: opacity 0.6s ease 0.7s, transform 0.6s ease 0.7s;
         }
 
+        #panel-content .atmosphere {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            font-weight: 300;
+            color: var(--text-secondary);
+            margin-top: 1.5rem;
+            font-style: italic;
+            border-left: 2px solid var(--glow-cyan);
+            padding-left: 1rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease 0.8s, transform 0.6s ease 0.8s;
+        }
+
         #info-panel.visible #panel-content h2,
         #info-panel.visible #panel-content .type,
-        #info-panel.visible #panel-content p {
+        #info-panel.visible #panel-content p,
+        #info-panel.visible #panel-content .atmosphere {
             opacity: 1;
             transform: translateY(0);
         }
@@ -286,6 +352,13 @@
     </style>
 </head>
 <body>
+    <canvas id="constellation-canvas"></canvas>
+    <div id="filter-container">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="ruins">Ruins</button>
+        <button class="filter-btn" data-filter="nature">Nature</button>
+        <button class="filter-btn" data-filter="marine">Marine</button>
+    </div>
 
     <div id="introduction">
         <h1>BELIZE</h1>
@@ -300,6 +373,7 @@
             <h2 id="panel-title"></h2>
             <div id="panel-type" class="type"></div>
             <p id="panel-description"></p>
+            <div id="panel-atmosphere" class="atmosphere"></div>
         </div>
         <div id="close-panel"></div>
     </div>
@@ -311,106 +385,136 @@
             {
                 name: "Great Blue Hole",
                 type: "Marine Sinkhole",
+                type_category: "marine",
                 coords: [17.316, -87.535],
                 description: "A colossal marine sinkhole, a portal to the ocean's underworld. Its perfect circular shape is a profound statement of geological time, inviting divers to explore its silent, ancient depths.",
+                atmosphere: "Deep azure silence, the weight of water, a sense of falling into the earth's core.",
                 image: "https://images.unsplash.com/photo-1587870529598-a893e4a2c161?q=80&w=1964"
             },
             {
                 name: "Hol Chan Marine Reserve",
                 type: "Barrier Reef",
+                type_category: "marine",
                 coords: [17.861, -87.962],
                 description: "A vibrant underwater thoroughfare, teeming with life. Here, the barrier reef parts, creating a channel where rays, sharks, and countless species congregate in a dazzling display of biodiversity.",
+                atmosphere: "Sun-dappled water, a kaleidoscope of life, the gentle current a silent conductor.",
                 image: "https://images.unsplash.com/photo-1552569434-53634a873894?q=80&w=1935"
             },
             {
                 name: "Cockscomb Basin",
                 type: "Wildlife Sanctuary",
+                type_category: "nature",
                 coords: [16.76, -88.58],
                 description: "The world's first jaguar preserve. A sanctuary of dense jungle, cascading waterfalls, and the elusive spirits of the wild. The air is thick with the scent of earth and the sound of life.",
+                atmosphere: "Humid air, the scent of damp earth and unseen blossoms, the distant call of a bird.",
                 image: "https://images.unsplash.com/photo-1547847055-a01b4991206c?q=80&w=1974"
             },
             {
                 name: "Xunantunich",
                 type: "Mayan Ruins",
+                type_category: "ruins",
                 coords: [17.089, -89.141],
                 description: "The 'Stone Woman' stands sentinel over the jungle. Ascend El Castillo to touch the sky and gaze upon a kingdom reclaimed by nature, a silent testament to a civilization's profound connection to the cosmos.",
+                atmosphere: "Sun-baked stone, a breeze whispering through ancient plazas, the vast green ocean of jungle below.",
                 image: "https://images.unsplash.com/photo-1628160049448-b39178199344?q=80&w=1974"
             },
             {
                 name: "ATM Cave",
                 type: "Archaeological Site",
+                type_category: "ruins",
                 coords: [17.186, -88.948],
                 description: "Actun Tunichil Muknal. A journey into the Mayan underworld, a living museum of sacred ceremony. Traverse through water and darkness to find crystalized skeletons and echoes of ancient rituals.",
+                atmosphere: "Cool, damp air, the echo of dripping water, the profound silence of a sacred, hidden world.",
                 image: "https://images.unsplash.com/photo-1565017240312-326b58e72764?q=80&w=2070"
             },
             {
                 name: "Caracol",
                 type: "Mayan Ruins",
+                type_category: "ruins",
                 coords: [16.76389, -89.11750],
                 description: "A large ancient Maya archaeological site, located in the Cayo District. It was one of the most important regional political centers of the Maya Lowlands during the Classic Period.",
+                atmosphere: "The grandeur of a lost city, the oppressive heat of the day giving way to the cool of stone.",
                 image: "https://images.unsplash.com/photo-1517581179733-39a2b3cba3c2?q=80&w=1974"
             },
             {
                 name: "Lubaantun",
                 type: "Mayan Ruins",
+                type_category: "ruins",
                 coords: [16.28165, -88.95945],
                 description: "A Late Classic Maya site known for its unusual construction of rounded stone blocks laid without mortar. The name means 'place of fallen stones' in the local Maya language.",
+                atmosphere: "Rounded stones beneath your fingers, the mystery of a people who needed no mortar to build their world.",
                 image: "https://images.unsplash.com/photo-1581219803359-24285b7336dc?q=80&w=1974"
             },
             {
                 name: "Nim Li Punit",
                 type: "Mayan Ruins",
+                type_category: "ruins",
                 coords: [16.317, -88.800],
                 description: "A Maya Classic Period site known for its numerous stelae, including one with a large headdress that gives the site its name, which means 'Big Hat' in the Kekchi Maya language.",
+                atmosphere: "Intricate carvings telling forgotten stories, the shade of a giant stone hat in the tropical sun.",
                 image: "https://images.unsplash.com/photo-1601643157324-159b2d043e4f?q=80&w=1974"
             },
             {
                 name: "Barton Creek Cave",
                 type: "Cave / Archaeological Site",
+                type_category: "nature",
                 coords: [17.11278, -88.92806],
                 description: "A large river cave that can be explored by canoe, featuring Maya artifacts and human remains, offering a glimpse into ancient rituals.",
+                atmosphere: "The gentle splash of a paddle in a subterranean river, beams of light revealing ancient secrets.",
                 image: "https://images.unsplash.com/photo-1589417937332-992ab4f28b34?q=80&w=2070"
             },
             {
                 name: "Nohoch Che'en Caves Branch",
                 type: "Cave System",
+                type_category: "nature",
                 coords: [17.195, -88.688],
                 description: "An extensive cave system perfect for cave tubing adventures, floating through underground rivers and past stunning rock formations.",
+                atmosphere: "The thrill of floating into darkness, the cool water a contrast to the jungle's heat.",
                 image: "https://images.unsplash.com/photo-1614865993946-7a659042b4d4?q=80&w=1974"
             },
             {
                 name: "Community Baboon Sanctuary",
                 type: "Wildlife Sanctuary",
+                type_category: "nature",
                 coords: [17.5560361, -88.5349778],
                 description: "A community-managed sanctuary for the Yucatán black howler monkey, known locally as the 'baboon', where you can see these fascinating creatures in their natural habitat.",
+                atmosphere: "A guttural roar from the canopy, the rustle of leaves, the feeling of being watched by curious eyes.",
                 image: "https://images.unsplash.com/photo-1579273166180-0a25b3a2b464?q=80&w=1974"
             },
             {
                 name: "Glover's Reef",
                 type: "Atoll / Marine Reserve",
+                type_category: "marine",
                 coords: [16.823, -87.791],
                 description: "A pristine atoll and marine reserve, part of the Belize Barrier Reef, offering world-class diving and snorkeling in a remote and beautiful setting.",
+                atmosphere: "The feeling of being at the edge of the world, surrounded by a universe of coral and turquoise water.",
                 image: "https://images.unsplash.com/photo-1596424594398-639d336044a2?q=80&w=1932"
             },
             {
                 name: "Laughing Bird Caye",
                 type: "National Park / Island",
+                type_category: "marine",
                 coords: [16.443443, -88.197250],
                 description: "A beautiful island national park, named for the laughing gulls that once bred there, offering great snorkeling and diving on a faro, a type of shelf atoll.",
+                atmosphere: "White sand, the cry of gulls, the gentle lapping of waves on a jewel-like island.",
                 image: "https://images.unsplash.com/photo-1574512241380-5a3317734a75?q=80&w=1974"
             },
             {
                 name: "St. Herman's Blue Hole National Park",
                 type: "National Park",
+                type_category: "nature",
                 coords: [17.156, -88.685],
                 description: "An inland blue hole and cave system, perfect for a cool dip in the jungle, with hiking trails and the impressive St. Herman's Cave to explore.",
+                atmosphere: "The sudden, shocking blue of the water in a jungle clearing, a cool respite from the tropical heat.",
                 image: "https://images.unsplash.com/photo-1507525428034-b723a996f3d4?q=80&w=2070"
             },
             {
                 name: "Caye Caulker",
                 type: "Island Village",
+                type_category: "marine",
                 coords: [17.7425, -88.025],
                 description: "A laid-back island with a 'go slow' vibe, perfect for snorkeling, diving, and relaxing. The island is split by 'The Split', a narrow waterway.",
+                atmosphere: "The rhythm of reggae music, the smell of barbecue, the warm embrace of a Caribbean breeze.",
                 image: "https://images.unsplash.com/photo-1552083375-1447ce886485?q=80&w=2070"
             }
         ];
@@ -424,10 +528,67 @@
             const panelTitle = document.getElementById('panel-title');
             const panelType = document.getElementById('panel-type');
             const panelDescription = document.getElementById('panel-description');
+            const panelAtmosphere = document.getElementById('panel-atmosphere');
 
             let map;
             let activeMarker = null;
             const markers = [];
+            let currentFilter = 'all';
+            let constellation;
+
+            const filterContainer = document.getElementById('filter-container');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const filter = button.dataset.filter;
+                    filterContainer.querySelector('.active').classList.remove('active');
+                    button.classList.add('active');
+                    currentFilter = filter;
+                    filterLocations(filter);
+                });
+            });
+
+            function filterLocations(filter) {
+                markers.forEach(m => {
+                    const markerEl = m.marker.getElement();
+                    if (filter === 'all' || m.location.type_category === filter) {
+                        markerEl.classList.remove('dimmed');
+                    } else {
+                        markerEl.classList.add('dimmed');
+                    }
+                });
+            }
+
+            const panelContent = document.getElementById('panel-content');
+            panelContent.addEventListener('scroll', () => {
+                const scrollTop = panelContent.scrollTop;
+                const scrollFraction = scrollTop / (panelContent.scrollHeight - panelContent.clientHeight);
+                const scale = 1.1 - (scrollFraction * 0.1);
+                const translateY = scrollFraction * -20;
+                panelImage.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (!activeMarker || infoPanel.classList.contains('visible') === false) return;
+
+                const visibleMarkers = markers.filter(m => !m.marker.getElement().classList.contains('dimmed'));
+                if (visibleMarkers.length <= 1) return;
+
+                const currentIndex = visibleMarkers.findIndex(m => m.marker === activeMarker);
+
+                let nextIndex;
+                if (e.key === 'ArrowRight') {
+                    nextIndex = (currentIndex + 1) % visibleMarkers.length;
+                } else if (e.key === 'ArrowLeft') {
+                    nextIndex = (currentIndex - 1 + visibleMarkers.length) % visibleMarkers.length;
+                } else {
+                    return;
+                }
+
+                const nextMarker = visibleMarkers[nextIndex];
+                handleMarkerClick(nextMarker.marker, nextMarker.location);
+            });
 
             function initializeMap() {
                 // The map is centered to reveal the whole of Belize, a gesture of presentation.
@@ -453,6 +614,9 @@
                     
                     markers.push({marker, location});
                 });
+
+                constellation = new Constellation('constellation-canvas', map, locations);
+                constellation.start();
             }
 
             function handleMarkerClick(marker, location) {
@@ -469,15 +633,23 @@
                 marker.getElement().classList.add('active');
                 activeMarker = marker;
 
+                if (constellation) {
+                    constellation.setActiveLocation(location);
+                }
+
                 // The reveal of information is a choreographed sequence.
                 // First, reset the state to ensure a clean animation every time.
                 infoPanel.classList.remove('visible');
+
+                panelContent.scrollTop = 0;
+                panelImage.style.transform = 'scale(1.1)';
 
                 // A brief pause allows the map to settle before the panel presentation begins.
                 setTimeout(() => {
                     panelTitle.textContent = location.name;
                     panelType.textContent = location.type;
                     panelDescription.textContent = location.description;
+                    panelAtmosphere.textContent = location.atmosphere;
                     panelImage.src = location.image;
                     panelImage.alt = location.name;
                     infoPanel.classList.add('visible');
@@ -489,6 +661,9 @@
                 if (activeMarker) {
                     activeMarker.getElement().classList.remove('active');
                     activeMarker = null;
+                }
+                if (constellation) {
+                    constellation.setActiveLocation(null);
                 }
                 // A gentle retreat, returning focus to the whole.
                 map.flyTo([17.1899, -88.4976], 8, {
@@ -514,5 +689,6 @@
             });
         });
     </script>
+    <script src="constellations.js"></script>
 </body>
 </html>
