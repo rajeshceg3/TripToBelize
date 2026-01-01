@@ -158,6 +158,12 @@
         .leaflet-tile-pane {
             /* Desaturate and shift the color palette to our theme. A simple, powerful gesture. */
             filter: grayscale(1) brightness(0.9) sepia(0.2) hue-rotate(180deg) saturate(1.5) contrast(1.1);
+            transition: filter 0.5s ease;
+        }
+
+        /* Tactical Mode Override */
+        #map.tactical-mode-active .leaflet-tile-pane {
+            filter: grayscale(1) brightness(0.5) contrast(1.2);
         }
 
         /* 
@@ -453,6 +459,103 @@
             box-shadow: 0 0 10px #ff6b6b;
         }
 
+        /* Tactical Toggle Switch */
+        #tactical-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1003;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 26, 41, 0.8);
+            border: 1px solid var(--glow-cyan);
+            border-radius: 20px;
+            padding: 5px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #tactical-toggle.active {
+            background: var(--glow-cyan);
+            color: var(--abyss-blue);
+            box-shadow: 0 0 15px var(--glow-cyan);
+        }
+
+        #tactical-toggle span {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+            margin-left: 10px;
+            font-weight: 600;
+        }
+
+        .toggle-icon {
+            width: 12px;
+            height: 12px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+        }
+
+        #tactical-toggle.active .toggle-icon {
+            background-color: var(--abyss-blue);
+        }
+
+        /* Gear Checkbox Styles */
+        .gear-section {
+            margin-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 10px;
+        }
+
+        .gear-header {
+            font-size: 0.8rem;
+            color: var(--glow-cyan);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .gear-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .gear-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gear-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .gear-item input {
+            margin-right: 5px;
+            accent-color: var(--glow-cyan);
+        }
+
+        /* Risk Indicator in HUD */
+        #mission-risk {
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .risk-value {
+            font-weight: bold;
+        }
+
         .panel-action {
             margin-top: 20px;
             opacity: 0;
@@ -568,6 +671,11 @@
 </head>
 <body>
     <canvas id="constellation-canvas"></canvas>
+    <div id="tactical-toggle">
+        <div class="toggle-icon"></div>
+        <span>Tactical Mode</span>
+    </div>
+
     <div id="filter-container">
         <button class="filter-btn active" data-filter="all">All</button>
         <button class="filter-btn" data-filter="ruins">Ruins</button>
@@ -581,10 +689,24 @@
             <h3>Expedition Log</h3>
             <span id="expedition-count">0 Targets</span>
         </div>
+
+        <div id="mission-risk">
+            <span>Risk Profile:</span>
+            <span id="risk-display" class="risk-value" style="color: #7fffd4">LOW</span>
+        </div>
+
         <div id="expedition-list">
             <!-- Targets added here -->
         </div>
-        <div class="hud-footer">
+
+        <div class="gear-section">
+            <div class="gear-header">Required Loadout</div>
+            <div id="gear-container" class="gear-list">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <div class="hud-footer" style="margin-top: 15px;">
             <button id="btn-generate-brief" class="action-btn">Generate Brief</button>
             <button id="btn-clear-expedition" class="action-btn secondary">Clear</button>
         </div>
@@ -607,11 +729,22 @@
                     <span id="brief-distance" class="stat-value">0 km</span>
                 </div>
                 <div class="stat-row">
+                    <span class="stat-label">Est. Time (ETA):</span>
+                    <span id="brief-eta" class="stat-value">0h 0m</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Risk Assessment:</span>
+                    <span id="brief-risk" class="stat-value">LOW</span>
+                </div>
+                <div class="stat-row">
                     <span class="stat-label">Primary Terrain:</span>
                     <span id="brief-terrain" class="stat-value">Unknown</span>
                 </div>
                 <div class="brief-summary">
-                    <p>Intel suggests a highly optimized route through <span id="brief-count">0</span> strategic locations. Prepare for deployment.</p>
+                    <p id="brief-text">Intel suggests a highly optimized route through <span id="brief-count">0</span> strategic locations. Prepare for deployment.</p>
+                </div>
+                <div id="brief-warnings" style="color: #ff6b6b; font-size: 0.9rem; margin-top: 10px; display: none;">
+                    WARNING: Critical gear missing for this operation.
                 </div>
             </div>
         </div>
@@ -637,6 +770,8 @@
     </div>
 
     <script src="constellations.js"></script>
+    <script src="LogisticsCore.js"></script>
+    <script src="TacticalOverlay.js"></script>
     <script src="expedition.js"></script>
     <script src="app.js"></script>
 </body>
