@@ -21,6 +21,71 @@ class LogisticsCore {
     }
 
     /**
+     * Calculates resource drain (Supplies, Fatigue, Integrity) for a given duration and terrain.
+     * @param {string} terrainType - The type of terrain (marine, nature, ruins, other).
+     * @param {number} durationHours - Duration of the activity in hours.
+     * @returns {Object} - { supplies: number, fatigue: number, integrity: number } (Values are drain amounts)
+     */
+    calculateResourceDrain(terrainType, durationHours) {
+        // Base drain rates per hour
+        const baseSupplies = 2.0;
+        const baseFatigue = 1.5;
+        const baseIntegrity = 0.5;
+
+        let multiplier = 1.0;
+        switch (terrainType) {
+            case 'nature': multiplier = 1.5; break; // Jungle is tiring
+            case 'marine': multiplier = 1.2; break; // Sea is moderate
+            case 'ruins': multiplier = 1.1; break; // Hiking ruins
+            default: multiplier = 1.0;
+        }
+
+        // Integrity drains faster in harsh terrain
+        let integrityMultiplier = terrainType === 'ruins' || terrainType === 'nature' ? 1.5 : 1.0;
+
+        return {
+            supplies: parseFloat((baseSupplies * multiplier * durationHours).toFixed(2)),
+            fatigue: parseFloat((baseFatigue * multiplier * durationHours).toFixed(2)),
+            integrity: parseFloat((baseIntegrity * integrityMultiplier * durationHours).toFixed(2))
+        };
+    }
+
+    /**
+     * Calculates dynamic risk based on location and time of day.
+     * @param {Object} location - The location object.
+     * @param {Date} time - The current simulation time.
+     * @returns {number} - Dynamic risk score (1-100).
+     */
+    getDynamicRisk(location, time) {
+        const baseRisk = location.risk_level || 1;
+        const hour = time.getHours();
+        const isNight = hour < 6 || hour > 18;
+
+        let riskScore = baseRisk * 10; // Base 1-5 to 10-50
+
+        // Night operations are significantly riskier in nature/marine
+        if (isNight && (location.type_category === 'nature' || location.type_category === 'marine')) {
+            riskScore *= 1.5;
+        }
+
+        // Weather impact
+        riskScore *= (1 + (this.currentWeatherRisk * 0.1));
+
+        return Math.min(Math.round(riskScore), 100);
+    }
+
+    /**
+     * Determines if a random event should trigger.
+     * @param {number} dynamicRisk - Current risk score (0-100).
+     * @returns {boolean} - True if event triggers.
+     */
+    shouldTriggerEvent(dynamicRisk) {
+        // Base probability 1% per tick, scales with risk
+        const probability = 0.01 + (dynamicRisk / 1000);
+        return Math.random() < probability;
+    }
+
+    /**
      * Calculates the estimated time of arrival (ETA) for a given route.
      * @param {Array} locations - The list of location objects in the route.
      * @param {number} totalDistance - Total distance in km.
