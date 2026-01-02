@@ -10,6 +10,141 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <style>
+        /* Simulation Visuals */
+        .sim-unit-marker {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .unit-pulse {
+            width: 12px;
+            height: 12px;
+            background-color: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #7fffd4;
+            animation: unit-ping 1s infinite;
+        }
+        @keyframes unit-ping {
+            0% { box-shadow: 0 0 0 0 rgba(127, 255, 212, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(127, 255, 212, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(127, 255, 212, 0); }
+        }
+
+        /* Mission Control Panel */
+        #mission-control {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(150%);
+            width: 80%;
+            max-width: 800px;
+            background: rgba(0, 15, 25, 0.95);
+            border: 1px solid var(--glow-cyan);
+            border-radius: 10px;
+            padding: 20px;
+            color: var(--sand-white);
+            z-index: 3000;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+
+        #mission-control.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .mc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(127, 255, 212, 0.3);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mc-title {
+            font-size: 1.2rem;
+            letter-spacing: 0.1rem;
+            color: var(--glow-cyan);
+            text-transform: uppercase;
+        }
+
+        .mc-time {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .mc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .mc-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .stat-bar-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-bar-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: var(--glow-cyan);
+            width: 100%;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .mc-log {
+            height: 150px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .log-entry { margin-bottom: 5px; border-left: 2px solid transparent; padding-left: 5px; }
+        .log-entry.info { border-color: #7fffd4; color: #7fffd4; }
+        .log-entry.warning { border-color: #ffd93d; color: #ffd93d; }
+        .log-entry.critical { border-color: #ff6b6b; color: #ff6b6b; }
+        .log-entry.success { border-color: #fff; color: #fff; }
+
+        .mc-controls {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .mc-grid { grid-template-columns: 1fr; }
+            .mc-log { height: 100px; }
+        }
         /* 
          * The design philosophy is rooted in harmony and purpose. 
          * Every element, every motion, every shade exists for a reason.
@@ -708,7 +843,39 @@
 
         <div class="hud-footer" style="margin-top: 15px;">
             <button id="btn-generate-brief" class="action-btn">Generate Brief</button>
+            <button id="btn-simulate-mission" class="action-btn" style="border-color: #ffd93d; color: #ffd93d;">Simulate</button>
             <button id="btn-clear-expedition" class="action-btn secondary">Clear</button>
+        </div>
+    </div>
+
+    <!-- Mission Control Panel -->
+    <div id="mission-control">
+        <div class="mc-header">
+            <span class="mc-title">Sentinel: Live Operations</span>
+            <span id="mc-timer" class="mc-time">00:00:00</span>
+        </div>
+        <div class="mc-grid">
+            <div class="mc-stats">
+                <div class="stat-bar-container">
+                    <div class="stat-bar-label"><span>Integrity</span><span id="val-integrity">100%</span></div>
+                    <div class="stat-bar-bg"><div id="bar-integrity" class="stat-bar-fill"></div></div>
+                </div>
+                <div class="stat-bar-container">
+                    <div class="stat-bar-label"><span>Supplies</span><span id="val-supplies">100%</span></div>
+                    <div class="stat-bar-bg"><div id="bar-supplies" class="stat-bar-fill"></div></div>
+                </div>
+                <div class="stat-bar-container">
+                    <div class="stat-bar-label"><span>Fatigue</span><span id="val-fatigue">0%</span></div>
+                    <div class="stat-bar-bg"><div id="bar-fatigue" class="stat-bar-fill" style="background: #ff6b6b; width: 0%;"></div></div>
+                </div>
+            </div>
+            <div id="mc-log-container" class="mc-log">
+                <!-- Logs go here -->
+            </div>
+        </div>
+        <div class="mc-controls">
+            <button id="btn-mc-pause" class="action-btn">Pause</button>
+            <button id="btn-mc-abort" class="action-btn secondary">Abort</button>
         </div>
     </div>
 
@@ -773,6 +940,7 @@
     <script src="LogisticsCore.js"></script>
     <script src="TacticalOverlay.js"></script>
     <script src="expedition.js"></script>
+    <script src="MissionSimulator.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

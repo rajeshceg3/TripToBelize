@@ -202,6 +202,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const expeditionList = document.getElementById('expedition-list');
     const btnGenerateBrief = document.getElementById('btn-generate-brief');
     const btnClearExpedition = document.getElementById('btn-clear-expedition');
+    const btnSimulateMission = document.getElementById('btn-simulate-mission');
+
+    // Mission Control elements
+    const missionControlPanel = document.getElementById('mission-control');
+    const mcTimer = document.getElementById('mc-timer');
+    const barIntegrity = document.getElementById('bar-integrity');
+    const barSupplies = document.getElementById('bar-supplies');
+    const barFatigue = document.getElementById('bar-fatigue');
+    const valIntegrity = document.getElementById('val-integrity');
+    const valSupplies = document.getElementById('val-supplies');
+    const valFatigue = document.getElementById('val-fatigue');
+    const mcLogContainer = document.getElementById('mc-log-container');
+    const btnMcPause = document.getElementById('btn-mc-pause');
+    const btnMcAbort = document.getElementById('btn-mc-abort');
 
     // Briefing Modal elements
     const briefingModal = document.getElementById('briefing-modal');
@@ -229,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Modules
     const logisticsCore = new LogisticsCore();
     let tacticalOverlay;
+    let missionSimulator;
 
     // Initialize Expedition Manager
     const expeditionManager = new ExpeditionManager();
@@ -318,6 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
         constellation.start();
 
         initTacticalOverlay();
+        initMissionSimulator();
 
         // Initialize Expedition Route Visualization
         updateExpeditionUI();
@@ -340,6 +356,108 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    // --- MISSION SIMULATOR INTEGRATION START ---
+
+    function initMissionSimulator() {
+        missionSimulator = new MissionSimulator(
+            map,
+            logisticsCore,
+            tacticalOverlay,
+            updateMissionControlUI, // onUpdate
+            logMissionEvent,        // onEvent
+            handleSimulationComplete // onComplete
+        );
+
+        btnSimulateMission.addEventListener('click', () => {
+            const list = expeditionManager.getExpedition();
+            if (list.length < 2) {
+                alert("Need at least 2 targets to simulate a route.");
+                return;
+            }
+
+            // Hide other panels
+            expeditionHud.classList.remove('visible');
+            briefingModal.classList.remove('visible');
+
+            // Show Mission Control
+            missionControlPanel.classList.add('visible');
+            mcLogContainer.innerHTML = ''; // Clear logs
+
+            // Start
+            missionSimulator.start(list);
+
+            // Auto-enable tactical overlay
+            if (!tacticalOverlay.isVisible) {
+                tacticalOverlay.show();
+                tacticalToggle.classList.add('active');
+            }
+        });
+
+        btnMcPause.addEventListener('click', () => {
+            missionSimulator.pause();
+            btnMcPause.textContent = missionSimulator.state.status === 'PAUSED' ? "Resume" : "Pause";
+        });
+
+        btnMcAbort.addEventListener('click', () => {
+            if (confirm("Abort Mission?")) {
+                missionSimulator.abort();
+            }
+        });
+    }
+
+    function updateMissionControlUI(state) {
+        // Time
+        mcTimer.textContent = state.currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Bars
+        updateBar(barIntegrity, valIntegrity, state.integrity);
+        updateBar(barSupplies, valSupplies, state.supplies);
+        updateBar(barFatigue, valFatigue, state.fatigue, true);
+    }
+
+    function updateBar(bar, val, value, isInverse = false) {
+        bar.style.width = `${Math.round(value)}%`;
+        val.textContent = `${Math.round(value)}%`;
+
+        if (isInverse) {
+            // High is bad (Fatigue)
+            if (value > 80) bar.style.backgroundColor = '#ff6b6b';
+            else if (value > 50) bar.style.backgroundColor = '#ffd93d';
+            else bar.style.backgroundColor = '#7fffd4';
+        } else {
+            // Low is bad (Supplies/Integrity)
+            if (value < 20) bar.style.backgroundColor = '#ff6b6b';
+            else if (value < 50) bar.style.backgroundColor = '#ffd93d';
+            else bar.style.backgroundColor = '#7fffd4';
+        }
+    }
+
+    function logMissionEvent(msg, type) {
+        const div = document.createElement('div');
+        div.className = `log-entry ${type}`;
+
+        const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        div.textContent = `[${time}] ${msg}`;
+
+        mcLogContainer.appendChild(div);
+        mcLogContainer.scrollTop = mcLogContainer.scrollHeight;
+    }
+
+    function handleSimulationComplete(success) {
+        btnMcPause.textContent = "Pause"; // Reset
+        setTimeout(() => {
+             if (confirm(success ? "Mission Complete. Return to planning?" : "Mission Failed. Return to planning?")) {
+                 missionControlPanel.classList.remove('visible');
+                 expeditionHud.classList.add('visible');
+
+                 // Clean up sim visuals if not handled by abort/complete internally
+                 // (Simulator handles removing its markers)
+             }
+        }, 1000);
+    }
+
+    // --- MISSION SIMULATOR INTEGRATION END ---
 
     function updateExpeditionUI() {
         const list = expeditionManager.getExpedition();
