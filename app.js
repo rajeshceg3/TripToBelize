@@ -705,10 +705,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         briefingModal.classList.add('visible');
+        briefingModal.setAttribute('aria-hidden', 'false');
+        closeBriefing.focus(); // Set initial focus
     });
 
     closeBriefing.addEventListener('click', () => {
-        briefingModal.classList.remove('visible');
+        closeBriefingModal();
     });
 
     // --- EXPEDITION LOGIC END ---
@@ -755,6 +757,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 panelImage.alt = location.name;
                 panelImage.classList.remove('loading');
                 panelImage.style.opacity = '1';
+            };
+            img.onerror = () => {
+                panelImage.src = location.image;
+                panelImage.alt = location.name;
             };
             img.src = location.image;
 
@@ -804,13 +810,47 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close modal keyboard support
     closeBriefing.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
-             briefingModal.classList.remove('visible');
+             closeBriefingModal();
+        }
+    });
+
+    function closeBriefingModal() {
+        briefingModal.classList.remove('visible');
+        briefingModal.setAttribute('aria-hidden', 'true');
+        btnGenerateBrief.focus(); // Restore focus to trigger
+    }
+
+    // Modal Focus Trap
+    briefingModal.addEventListener('keydown', (e) => {
+        if (!briefingModal.classList.contains('visible')) return;
+
+        const focusableElements = briefingModal.querySelectorAll('a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]');
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+        if (e.key === 'Escape') {
+            closeBriefingModal();
         }
     });
 
     // Image error handling
     panelImage.onerror = () => {
         panelImage.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill%3A%23001a29%3B%7D.cls-2%7Bfill%3A%2300384d%3B%7D.cls-3%7Bfill%3A%237fffd4%3Bfont-size%3A20px%3Bfont-family%3Amonospace%3B%7D%3C%2Fstyle%3E%3C%2Fdefs%3E%3Crect%20class%3D%22cls-1%22%20width%3D%22200%22%20height%3D%22200%22%2F%3E%3Crect%20class%3D%22cls-2%22%20x%3D%2280%22%20y%3D%2260%22%20width%3D%2240%22%20height%3D%2260%22%2F%3E%3Ctext%20class%3D%22cls-3%22%20x%3D%2250%22%20y%3D%22150%22%3ENO%20SIGNAL%3C%2Ftext%3E%3C%2Fsvg%3E';
+        panelImage.classList.remove('loading');
+        panelImage.style.opacity = '1';
     };
 
     mapContainer.addEventListener('click', (e) => {
