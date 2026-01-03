@@ -244,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const logisticsCore = new LogisticsCore();
     let tacticalOverlay;
     let missionSimulator;
+    let strategicPathfinder;
 
     // Initialize Expedition Manager
     const expeditionManager = new ExpeditionManager();
@@ -367,6 +368,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (map && !tacticalOverlay) {
             tacticalOverlay = new TacticalOverlay(map);
 
+            // Initialize Pathfinder with map bounds
+            const bounds = map.getBounds();
+            const mapBounds = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest()
+            };
+            strategicPathfinder = new StrategicPathfinder(mapBounds, 0.01);
+
+            // Create some simulated risk zones
+            const riskZones = [
+                { coords: [17.5, -88.0], radius: 10, risk: 80 }, // High risk marine
+                { coords: [16.8, -88.8], radius: 15, risk: 60 }  // High risk jungle
+            ];
+
+            strategicPathfinder.initializeGrid(riskZones);
+            tacticalOverlay.setRiskZones(riskZones);
+
             const toggleHandler = () => {
                 const isVisible = tacticalOverlay.toggle();
                 if (isVisible) {
@@ -398,6 +418,9 @@ document.addEventListener('DOMContentLoaded', () => {
             logMissionEvent,        // onEvent
             handleSimulationComplete // onComplete
         );
+
+        // Inject Pathfinder
+        missionSimulator.setPathfinder(strategicPathfinder);
 
         btnSimulateMission.addEventListener('click', () => {
             const list = expeditionManager.getExpedition();

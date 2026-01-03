@@ -34,8 +34,14 @@ class MissionSimulator {
         };
 
         this.route = [];
+        this.path = []; // High-res path including A* waypoints
         this.marker = null;
         this.sensorCircle = null;
+        this.pathfinder = null; // Will be injected
+    }
+
+    setPathfinder(pathfinder) {
+        this.pathfinder = pathfinder;
     }
 
     start(locations) {
@@ -45,15 +51,33 @@ class MissionSimulator {
         }
 
         this.route = locations;
+
+        // Generate high-resolution path if pathfinder is available
+        if (this.pathfinder) {
+             this.path = [];
+             for(let i=0; i<locations.length-1; i++) {
+                 const start = locations[i].coords;
+                 const end = locations[i+1].coords;
+                 const segmentPath = this.pathfinder.findPath(start, end);
+                 // Append segment, skipping first point if not first segment to avoid dups
+                 if(i > 0) segmentPath.shift();
+                 this.path = this.path.concat(segmentPath);
+             }
+             this.onEvent("Strategic Route Optimized. Avoiding High-Risk Zones.", "info");
+        } else {
+            // Fallback to straight lines (just the key locations)
+            this.path = locations.map(l => l.coords);
+        }
+
         this.state = {
             status: 'RUNNING',
             startTime: new Date(), // Sim start now
             currentTime: new Date(),
-            position: locations[0].coords,
+            position: this.path[0],
             supplies: 100,
             fatigue: 0,
             integrity: 100,
-            currentLegIndex: 0,
+            currentLegIndex: 0, // Index in this.path
             progressOnLeg: 0
         };
 
@@ -117,18 +141,13 @@ class MissionSimulator {
     }
 
     moveUnit() {
-        const startLoc = this.route[this.state.currentLegIndex];
-        const endLoc = this.route[this.state.currentLegIndex + 1];
+        const startCoords = this.path[this.state.currentLegIndex];
+        const endCoords = this.path[this.state.currentLegIndex + 1];
 
-        if (!startLoc || !endLoc) return false; // End of route
+        if (!startCoords || !endCoords) return false; // End of route
 
-        // Determine speed based on terrain of destination
-        // (Simplified: using logic from LogisticsCore indirectly via fixed step)
-        // Ideally speed varies, but for smooth sim we iterate progress
-
-        // Progress increment
         // Distance between points
-        const dist = this.getDist(startLoc.coords, endLoc.coords);
+        const dist = this.getDist(startCoords, endCoords);
 
         // Handle zero distance edge case
         if (dist <= 0.001) {
@@ -138,48 +157,50 @@ class MissionSimulator {
         }
 
         // Assume average speed 50km/h
-        // Distance covered in tickDurationMinutes (e.g. 15min = 0.25h) -> 12.5km
         const kmPerTick = 50 * (this.tickDurationMinutes / 60);
         const progressInc = kmPerTick / dist;
 
         this.state.progressOnLeg += progressInc;
 
         if (this.state.progressOnLeg >= 1) {
-            // Calculate how much we overshot
-            // Distance traveled beyond waypoint
+            // Overshot logic
             const excessRatio = this.state.progressOnLeg - 1;
             const excessKm = excessRatio * dist;
 
-            // Reached waypoint
-            this.onEvent(`Reached Waypoint: ${endLoc.name}`, "success");
+            // If we reached a major waypoint (one of the locations), log it
+            // We need to check if endCoords matches any location coord
+            const reachedLoc = this.route.find(l => this.getDist(l.coords, endCoords) < 0.01);
+            if (reachedLoc) {
+                this.onEvent(`Reached Objective: ${reachedLoc.name}`, "success");
+            }
+
             this.state.currentLegIndex++;
-            this.state.progressOnLeg = 0; // Temporarily reset
+            this.state.progressOnLeg = 0;
 
             // Check if it was the last point
-            if (this.state.currentLegIndex >= this.route.length - 1) {
+            if (this.state.currentLegIndex >= this.path.length - 1) {
                 return false; // Done
             }
 
             // Apply excess distance to the next leg
-            const nextStart = this.route[this.state.currentLegIndex];
-            const nextEnd = this.route[this.state.currentLegIndex + 1];
+            const nextStart = this.path[this.state.currentLegIndex];
+            const nextEnd = this.path[this.state.currentLegIndex + 1];
 
             if (nextStart && nextEnd) {
-                const nextDist = this.getDist(nextStart.coords, nextEnd.coords);
+                const nextDist = this.getDist(nextStart, nextEnd);
                 if (nextDist > 0.001) {
                     this.state.progressOnLeg = excessKm / nextDist;
-                    // Cap it just in case we overshot multiple legs (simpler logic: clamp to 1)
                     if (this.state.progressOnLeg > 1) this.state.progressOnLeg = 1;
                 }
             }
         }
 
         // Interpolate position
-        const currentStart = this.route[this.state.currentLegIndex];
-        const currentEnd = this.route[this.state.currentLegIndex + 1];
+        const currentStart = this.path[this.state.currentLegIndex];
+        const currentEnd = this.path[this.state.currentLegIndex + 1];
 
         if (currentStart && currentEnd) {
-             this.state.position = this.interpolate(currentStart.coords, currentEnd.coords, this.state.progressOnLeg);
+             this.state.position = this.interpolate(currentStart, currentEnd, this.state.progressOnLeg);
         }
 
         return true;

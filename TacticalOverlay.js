@@ -97,6 +97,21 @@ class TacticalOverlay {
         });
     }
 
+    renderHeatmap(riskZones) {
+        if (!riskZones) return;
+
+        riskZones.forEach(zone => {
+            // Visualize risk zones as semi-transparent red circles
+            L.circle(zone.coords, {
+                radius: zone.radius * 1000, // km to meters
+                color: '#ff6b6b',
+                fillColor: '#ff6b6b',
+                fillOpacity: 0.2 + (zone.risk / 100), // Opacity based on risk
+                weight: 0
+            }).addTo(this.layerGroup);
+        });
+    }
+
     // Call this when map moves to update grid if we were doing dynamic grid
     // For now, we render grid based on initial view or current view when toggled on
     update() {
@@ -104,6 +119,18 @@ class TacticalOverlay {
             this.layerGroup.clearLayers();
             this.renderGrid();
             this.renderRangeRings();
+            // Re-render heatmap if data exists (this assumes external caller handles data)
+            // Ideally we store the riskZones in the class
+            if (this.riskZones) {
+                this.renderHeatmap(this.riskZones);
+            }
+        }
+    }
+
+    setRiskZones(zones) {
+        this.riskZones = zones;
+        if (this.isVisible) {
+            this.update();
         }
     }
 }
