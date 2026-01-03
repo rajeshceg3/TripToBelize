@@ -806,7 +806,7 @@
 </head>
 <body>
     <canvas id="constellation-canvas"></canvas>
-    <div id="tactical-toggle">
+    <div id="tactical-toggle" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle Tactical Mode">
         <div class="toggle-icon"></div>
         <span>Tactical Mode</span>
     </div>
@@ -880,11 +880,11 @@
     </div>
 
     <!-- Briefing Modal -->
-    <div id="briefing-modal" class="modal-overlay">
+    <div id="briefing-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="briefing-title">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Mission Briefing</h2>
-                <div id="close-briefing" class="close-modal"></div>
+                <h2 id="briefing-title">Mission Briefing</h2>
+                <div id="close-briefing" class="close-modal" role="button" tabindex="0" aria-label="Close Briefing"></div>
             </div>
             <div class="modal-body">
                 <div class="stat-row">
@@ -917,14 +917,15 @@
         </div>
     </div>
 
-    <div id="introduction">
+    <div id="introduction" role="button" tabindex="0" aria-label="Enter Application">
         <h1>BELIZE</h1>
         <p>An Elemental Journey</p>
+        <p style="font-size: 0.8rem; margin-top: 2rem; opacity: 0.7;">Click or Press Enter to Begin</p>
     </div>
 
     <div id="map"></div>
 
-    <div id="info-panel">
+    <div id="info-panel" role="region" aria-label="Location Information">
         <img id="panel-image" src="" alt="">
         <div id="panel-content">
             <h2 id="panel-title"></h2>
@@ -933,7 +934,7 @@
             <div id="panel-atmosphere" class="atmosphere"></div>
             <button id="btn-add-expedition" class="action-btn panel-action">Initialize Target</button>
         </div>
-        <div id="close-panel"></div>
+        <div id="close-panel" role="button" tabindex="0" aria-label="Close Information Panel"></div>
     </div>
 
     <script src="constellations.js"></script>
