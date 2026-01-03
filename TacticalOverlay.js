@@ -13,7 +13,10 @@ class TacticalOverlay {
 
         // Configuration for the tactical grid
         this.gridSpacing = 0.1; // roughly 11km
-        this.gridColor = 'rgba(127, 255, 212, 0.15)';
+        this.gridColor = 'rgba(127, 255, 212, 0.08)'; // More subtle
+
+        // Bind update to keep context
+        this.update = this.update.bind(this);
     }
 
     toggle() {
@@ -32,12 +35,18 @@ class TacticalOverlay {
         this.renderRangeRings();
         this.isVisible = true;
 
+        // Dynamic updates
+        this.map.on('moveend', this.update);
+
         // Use CSS class for style changes
         document.getElementById('map').classList.add('tactical-mode-active');
     }
 
     hide() {
         if (!this.isVisible) return;
+
+        this.map.off('moveend', this.update);
+
         this.layerGroup.clearLayers();
         this.layerGroup.removeFrom(this.map);
         this.isVisible = false;
@@ -47,7 +56,8 @@ class TacticalOverlay {
     }
 
     renderGrid() {
-        const bounds = this.map.getBounds();
+        // Expand bounds slightly to ensure coverage during small pans
+        const bounds = this.map.getBounds().pad(0.5);
         const north = bounds.getNorth();
         const south = bounds.getSouth();
         const west = bounds.getWest();
@@ -57,8 +67,8 @@ class TacticalOverlay {
         for (let lng = Math.ceil(west / this.gridSpacing) * this.gridSpacing; lng <= east; lng += this.gridSpacing) {
             L.polyline([[south, lng], [north, lng]], {
                 color: this.gridColor,
-                weight: 1,
-                dashArray: '5, 5'
+                weight: 0.5,
+                dashArray: '4, 8'
             }).addTo(this.layerGroup);
         }
 
@@ -66,8 +76,8 @@ class TacticalOverlay {
         for (let lat = Math.ceil(south / this.gridSpacing) * this.gridSpacing; lat <= north; lat += this.gridSpacing) {
             L.polyline([[lat, west], [lat, east]], {
                 color: this.gridColor,
-                weight: 1,
-                dashArray: '5, 5'
+                weight: 0.5,
+                dashArray: '4, 8'
             }).addTo(this.layerGroup);
         }
     }
