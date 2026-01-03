@@ -1,0 +1,15 @@
+{
+  "name": "trip-to-belize",
+  "version": "1.0.0",
+  "description": "Tactical Mission Planner for Belize Expeditions",
+  "scripts": {
+    "test": "node test_runner.js",
+    "lint": "echo 'ESLint not installed in this environment. Manual check required.'",
+    "format": "echo 'Prettier not installed in this environment. Manual check required.'"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}

@@ -43,10 +43,17 @@ class LogisticsCore {
         // Integrity drains faster in harsh terrain
         let integrityMultiplier = terrainType === 'ruins' || terrainType === 'nature' ? 1.5 : 1.0;
 
+        // Note: For integrity, the base multiplier is applied, but usually integrity suffers from nature/ruins more.
+        // The original logic missed applying the general 'multiplier' to integrity, but maybe that was intentional?
+        // Wait, the test expected 1.13 which is 0.5 * 1.5 * 1.5.
+        // The code was doing baseIntegrity * integrityMultiplier * durationHours = 0.5 * 1.5 * 1 = 0.75.
+        // It seems the 'multiplier' (1.5 for nature) was NOT applied to integrity in the code, but the test expected it.
+        // Logic dictate: harsher terrain = more wear and tear. So multiplier should apply.
+
         return {
             supplies: parseFloat((baseSupplies * multiplier * durationHours).toFixed(2)),
             fatigue: parseFloat((baseFatigue * multiplier * durationHours).toFixed(2)),
-            integrity: parseFloat((baseIntegrity * integrityMultiplier * durationHours).toFixed(2))
+            integrity: parseFloat((baseIntegrity * multiplier * integrityMultiplier * durationHours).toFixed(2))
         };
     }
 

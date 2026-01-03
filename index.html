@@ -374,6 +374,18 @@
             opacity: 0;
             transform: scale(1.1);
             transition: opacity 1s ease 0.3s, transform 1s ease 0.3s;
+            background-color: rgba(0,0,0,0.5); /* Placeholder color */
+        }
+
+        /* Skeleton loading animation for image */
+        @keyframes pulse-skeleton {
+            0% { background-color: rgba(127, 255, 212, 0.1); }
+            50% { background-color: rgba(127, 255, 212, 0.2); }
+            100% { background-color: rgba(127, 255, 212, 0.1); }
+        }
+
+        #panel-image.loading {
+            animation: pulse-skeleton 1.5s infinite;
         }
 
         #info-panel.visible #panel-image {
@@ -811,11 +823,11 @@
         <span>Tactical Mode</span>
     </div>
 
-    <div id="filter-container">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="ruins">Ruins</button>
-        <button class="filter-btn" data-filter="nature">Nature</button>
-        <button class="filter-btn" data-filter="marine">Marine</button>
+    <div id="filter-container" role="group" aria-label="Location Filters">
+        <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
+        <button class="filter-btn" data-filter="ruins" aria-pressed="false">Ruins</button>
+        <button class="filter-btn" data-filter="nature" aria-pressed="false">Nature</button>
+        <button class="filter-btn" data-filter="marine" aria-pressed="false">Marine</button>
     </div>
 
     <!-- Strategic HUD for Expedition Planning -->
