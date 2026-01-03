@@ -256,8 +256,15 @@ document.addEventListener('DOMContentLoaded', () => {
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
             const filter = button.dataset.filter;
-            filterContainer.querySelector('.active').classList.remove('active');
+            // A11y update
+            const activeBtn = filterContainer.querySelector('.active');
+            if (activeBtn) {
+                activeBtn.classList.remove('active');
+                activeBtn.setAttribute('aria-pressed', 'false');
+            }
             button.classList.add('active');
+            button.setAttribute('aria-pressed', 'true');
+
             currentFilter = filter;
             filterLocations(filter);
         });
@@ -696,8 +703,20 @@ document.addEventListener('DOMContentLoaded', () => {
             panelType.textContent = location.type;
             panelDescription.textContent = location.description;
             panelAtmosphere.textContent = location.atmosphere;
-            panelImage.src = location.image;
-            panelImage.alt = location.name;
+
+            // UX Enhancement: Loading State
+            panelImage.classList.add('loading');
+            panelImage.style.opacity = '0';
+
+            const img = new Image();
+            img.onload = () => {
+                panelImage.src = location.image;
+                panelImage.alt = location.name;
+                panelImage.classList.remove('loading');
+                panelImage.style.opacity = '1';
+            };
+            img.src = location.image;
+
             updateAddButtonState(); // Update button state based on selection
             infoPanel.classList.add('visible');
         }, 500);
