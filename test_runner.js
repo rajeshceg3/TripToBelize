@@ -85,6 +85,7 @@ const LogisticsCore = require(tempFile);
 
 // Run Tests
 require('./tests/test_LogisticsCore.js');
+require('./tests/test_StrategicPathfinder.js');
 
 // Cleanup
 fs.unlinkSync(tempFile);
