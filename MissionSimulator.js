@@ -129,7 +129,9 @@ class MissionSimulator {
         // Progress increment
         // Distance between points
         const dist = this.getDist(startLoc.coords, endLoc.coords);
-        if (dist === 0) {
+
+        // Handle zero distance edge case
+        if (dist <= 0.001) {
              this.state.currentLegIndex++;
              this.state.progressOnLeg = 0;
              return true;
@@ -143,14 +145,32 @@ class MissionSimulator {
         this.state.progressOnLeg += progressInc;
 
         if (this.state.progressOnLeg >= 1) {
+            // Calculate how much we overshot
+            // Distance traveled beyond waypoint
+            const excessRatio = this.state.progressOnLeg - 1;
+            const excessKm = excessRatio * dist;
+
             // Reached waypoint
-            this.state.currentLegIndex++;
-            this.state.progressOnLeg = 0;
             this.onEvent(`Reached Waypoint: ${endLoc.name}`, "success");
+            this.state.currentLegIndex++;
+            this.state.progressOnLeg = 0; // Temporarily reset
 
             // Check if it was the last point
             if (this.state.currentLegIndex >= this.route.length - 1) {
                 return false; // Done
+            }
+
+            // Apply excess distance to the next leg
+            const nextStart = this.route[this.state.currentLegIndex];
+            const nextEnd = this.route[this.state.currentLegIndex + 1];
+
+            if (nextStart && nextEnd) {
+                const nextDist = this.getDist(nextStart.coords, nextEnd.coords);
+                if (nextDist > 0.001) {
+                    this.state.progressOnLeg = excessKm / nextDist;
+                    // Cap it just in case we overshot multiple legs (simpler logic: clamp to 1)
+                    if (this.state.progressOnLeg > 1) this.state.progressOnLeg = 1;
+                }
             }
         }
 

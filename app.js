@@ -320,11 +320,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 className: 'leaflet-marker-icon',
                 iconSize: [200, 200]
             });
-            const marker = L.marker(location.coords, { icon: icon }).addTo(map);
+            const marker = L.marker(location.coords, { icon: icon, keyboard: false }).addTo(map);
 
             marker.on('click', () => {
                 handleMarkerClick(marker, location);
             });
+
+            // Add keyboard support to the custom div icon
+            const el = marker.getElement();
+            if (el) {
+                el.tabIndex = 0;
+                el.setAttribute('role', 'button');
+                el.setAttribute('aria-label', location.name);
+                el.addEventListener('keydown', (e) => {
+                     if (e.key === 'Enter' || e.key === ' ') {
+                         handleMarkerClick(marker, location);
+                         e.preventDefault();
+                     }
+                });
+            }
 
             markers.push({marker, location});
         });
@@ -346,12 +360,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (map && !tacticalOverlay) {
             tacticalOverlay = new TacticalOverlay(map);
 
-            tacticalToggle.addEventListener('click', () => {
+            const toggleHandler = () => {
                 const isVisible = tacticalOverlay.toggle();
                 if (isVisible) {
                     tacticalToggle.classList.add('active');
+                    tacticalToggle.setAttribute('aria-pressed', 'true');
                 } else {
                     tacticalToggle.classList.remove('active');
+                    tacticalToggle.setAttribute('aria-pressed', 'false');
+                }
+            };
+
+            tacticalToggle.addEventListener('click', toggleHandler);
+            tacticalToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    toggleHandler();
                 }
             });
         }
@@ -474,14 +497,32 @@ document.addEventListener('DOMContentLoaded', () => {
         list.forEach(loc => {
             const div = document.createElement('div');
             div.className = 'expedition-item';
-            div.innerHTML = `
-                <span>${loc.name}</span>
-                <span class="remove-btn" title="Remove Target">×</span>
-            `;
-            div.querySelector('.remove-btn').addEventListener('click', (e) => {
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = loc.name;
+
+            const removeBtn = document.createElement('span');
+            removeBtn.className = 'remove-btn';
+            removeBtn.title = 'Remove Target';
+            removeBtn.textContent = '×';
+            removeBtn.setAttribute('role', 'button');
+            removeBtn.setAttribute('tabindex', '0');
+            removeBtn.setAttribute('aria-label', `Remove ${loc.name}`);
+
+            removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 expeditionManager.removeLocation(loc.name);
             });
+
+            removeBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    expeditionManager.removeLocation(loc.name);
+                }
+            });
+
+            div.appendChild(nameSpan);
+            div.appendChild(removeBtn);
             expeditionList.appendChild(div);
         });
 
@@ -720,13 +761,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // The experience begins with a single, intentional gesture.
-    introduction.addEventListener('click', () => {
+    function startExperience() {
+        if (introduction.classList.contains('hidden')) return;
         introduction.classList.add('hidden');
         // The map should not exist until it is summoned.
         setTimeout(initializeMap, 500);
-    }, { once: true });
+    }
+
+    introduction.addEventListener('click', startExperience, { once: true });
+    introduction.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            startExperience();
+        }
+    });
 
     closePanelButton.addEventListener('click', closeInfoPanel);
+    closePanelButton.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            closeInfoPanel();
+        }
+    });
+
+    // Close modal keyboard support
+    closeBriefing.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+             briefingModal.classList.remove('visible');
+        }
+    });
+
+    // Image error handling
+    panelImage.onerror = () => {
+        panelImage.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%22200%22%20height%3D%22200%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20200%20200%22%20preserveAspectRatio%3D%22none%22%3E%3Cdefs%3E%3Cstyle%3E.cls-1%7Bfill%3A%23001a29%3B%7D.cls-2%7Bfill%3A%2300384d%3B%7D.cls-3%7Bfill%3A%237fffd4%3Bfont-size%3A20px%3Bfont-family%3Amonospace%3B%7D%3C%2Fstyle%3E%3C%2Fdefs%3E%3Crect%20class%3D%22cls-1%22%20width%3D%22200%22%20height%3D%22200%22%2F%3E%3Crect%20class%3D%22cls-2%22%20x%3D%2280%22%20y%3D%2260%22%20width%3D%2240%22%20height%3D%2260%22%2F%3E%3Ctext%20class%3D%22cls-3%22%20x%3D%2250%22%20y%3D%22150%22%3ENO%20SIGNAL%3C%2Ftext%3E%3C%2Fsvg%3E';
+    };
 
     mapContainer.addEventListener('click', (e) => {
         // If one clicks away from a beacon, the focus should return to the whole.
