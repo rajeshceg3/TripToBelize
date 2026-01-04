@@ -1,4 +1,4 @@
-// Simple Custom Test Runner to bypass node_modules limitations in sandbox
+// Professional Test Runner
 const fs = require('fs');
 const path = require('path');
 
@@ -26,6 +26,7 @@ function it(testName, fn) {
     } catch (error) {
         console.error(`  ${RED}✘ ${testName}${RESET}`);
         console.error(`    ${RED}${error.message}${RESET}`);
+        console.error(error.stack);
         failedTests++;
     }
 }
@@ -63,32 +64,30 @@ function expect(actual) {
     };
 }
 
-// Global exposure
+// Global exposure for test files
 global.describe = describe;
 global.it = it;
 global.expect = expect;
 
-// Load Files to Test
-// We need to manually load the source file because it's not a module
-// In a real env we would use require or import.
-// Since LogisticsCore is a class in a file, let's try to eval it into scope or require it if we modify it to export.
-
-// HACK: Read LogisticsCore.js and append 'module.exports = LogisticsCore;' to make it require-able for this runner
-// without modifying the original file if possible. But here I will modify the file momentarily or just read it and eval.
-
-// Better approach: Read the file content, append the export, write to temp file, require temp file.
-const sourceCode = fs.readFileSync('./LogisticsCore.js', 'utf8');
-const tempFile = './LogisticsCore_temp.js';
-fs.writeFileSync(tempFile, sourceCode + '\nmodule.exports = LogisticsCore;');
-
-const LogisticsCore = require(tempFile);
+// Load Source Modules Directly (Now that they are UMD/CommonJS compatible)
+try {
+    global.LogisticsCore = require('./LogisticsCore.js');
+    global.StrategicPathfinder = require('./StrategicPathfinder.js');
+} catch (e) {
+    console.error(`${RED}CRITICAL FAILURE: Could not load source modules.${RESET}`);
+    console.error(e);
+    process.exit(1);
+}
 
 // Run Tests
-require('./tests/test_LogisticsCore.js');
-require('./tests/test_StrategicPathfinder.js');
-
-// Cleanup
-fs.unlinkSync(tempFile);
+try {
+    require('./tests/test_LogisticsCore.js');
+    require('./tests/test_StrategicPathfinder.js');
+} catch (e) {
+    console.error(`${RED}CRITICAL FAILURE: Error running tests.${RESET}`);
+    console.error(e);
+    failedTests++;
+}
 
 // Summary
 console.log(`\n${"=".repeat(20)}`);
