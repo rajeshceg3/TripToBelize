@@ -1,4 +1,4 @@
-const StrategicPathfinder = require('../StrategicPathfinder.js');
+const StrategicPathfinder = global.StrategicPathfinder;
 
 describe('Strategic Pathfinder Module', () => {
 
