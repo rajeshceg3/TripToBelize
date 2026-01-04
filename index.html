@@ -5,925 +5,665 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Belize: An Elemental Journey</title>
     
-    <!-- We begin with the foundational medium for our canvas -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         /*
-         * DESIGN SYSTEM: "Ethereal Tech"
-         * Inspired by high-end fintech and sci-fi interfaces (Stripe, Arc).
-         * Focus on depth, glassmorphism, fluid motion, and sophisticated typography.
+         * DESIGN SYSTEM: "Ethereal Tech" v2.0
+         * "Ultrathink" Polish: Deep, Atmospheric, Precision.
         */
         :root {
-            /* Palette */
-            --abyss-blue: #001219;
-            --abyss-deep: #00080a;
+            /* Palette - Deep Space & Bioluminescence */
+            --abyss-blue: #02040a;
+            --abyss-surface: #0a111a;
             --ocean-teal: #007a8a;
-            --sand-white: #f7f5f2;
-            --glow-cyan: #7fffd4;
-            --glow-cyan-dim: rgba(127, 255, 212, 0.4);
-            --danger-red: #ff4d4d;
-            --warning-gold: #ffd93d;
+            --sand-white: #f0f4f8;
+            --glow-cyan: #64ffda;
+            --glow-cyan-dim: rgba(100, 255, 218, 0.15);
+            --glow-cyan-bright: rgba(100, 255, 218, 0.6);
+            --danger-red: #ff5252;
+            --warning-gold: #ffd700;
 
             /* Glass & Surfaces */
-            --glass-surface: rgba(10, 25, 35, 0.65);
+            --glass-bg: rgba(10, 15, 22, 0.75);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.05);
-            --glass-blur: 24px;
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            --glass-border-highlight: rgba(255, 255, 255, 0.15);
+            --glass-blur: 32px;
+            --glass-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.6);
+            --panel-radius: 20px;
 
             /* Typography */
             --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
             --font-display: 'Space Grotesk', monospace;
-            --text-primary: #e0e0e0;
+            --text-primary: #e6f1f5;
             --text-secondary: #94a3b8;
             --text-tertiary: #64748b;
 
-            /* Transitions */
-            --ease-fluid: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            --ease-elastic: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* Motion */
+            --ease-fluid: cubic-bezier(0.2, 0.0, 0.2, 1.0); /* Fluid ease-out */
+            --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);   /* Bouncy */
         }
 
         *, *::before, *::after {
             box-sizing: border-box;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
+            margin: 0; padding: 0;
+            height: 100%; width: 100%;
             overflow: hidden;
-            background-color: var(--abyss-deep);
+            background-color: var(--abyss-blue);
             font-family: var(--font-ui);
             color: var(--text-primary);
+            font-size: 16px;
         }
 
-        /*
-         * Simulation Visuals
-         * Refined pulsing markers.
-        */
-        .sim-unit-marker {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-        }
-        .unit-pulse {
-            width: 8px;
-            height: 8px;
-            background-color: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 15px var(--glow-cyan);
-            position: relative;
-        }
-        .unit-pulse::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            border: 1px solid var(--glow-cyan);
-            animation: ripple 1.5s infinite var(--ease-fluid);
-        }
-
-        @keyframes ripple {
-            0% { width: 100%; height: 100%; opacity: 0.8; }
-            100% { width: 300%; height: 300%; opacity: 0; }
-        }
-
-        /*
-         * Mission Control Panel
-         * A sophisticated dashboard for active operations.
-        */
-        #mission-control {
-            position: fixed;
-            bottom: 32px;
-            left: 50%;
-            transform: translateX(-50%) translateY(120%);
-            width: 90%;
-            max-width: 720px;
-            background: var(--glass-surface);
+        /* --- UTILS --- */
+        .glass-panel {
+            background: var(--glass-bg);
             backdrop-filter: blur(var(--glass-blur));
             -webkit-backdrop-filter: blur(var(--glass-blur));
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 24px;
-            z-index: 3000;
+            border-top: 1px solid var(--glass-border-highlight);
             box-shadow: var(--glass-shadow);
-            transition: transform 0.6s var(--ease-elastic);
-            opacity: 0;
         }
 
-        #mission-control.visible {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        .btn-reset { border: none; background: none; padding: 0; cursor: pointer; }
 
-        .mc-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 16px;
-        }
-
-        .mc-title {
-            font-family: var(--font-display);
-            font-size: 1rem;
-            letter-spacing: 0.05em;
-            color: var(--glow-cyan);
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .mc-time {
-            font-family: var(--font-display);
-            font-size: 1.25rem;
-            color: var(--sand-white);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .mc-grid {
-            display: grid;
-            grid-template-columns: 1.2fr 1.8fr;
-            gap: 32px;
-        }
-
-        .mc-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .stat-bar-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .stat-bar-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .stat-bar-bg {
-            width: 100%;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-
-        .stat-bar-fill {
-            height: 100%;
-            background: var(--glow-cyan);
-            width: 100%;
-            border-radius: 99px;
-            transition: width 0.5s var(--ease-fluid), background-color 0.3s ease;
-        }
-
-        .mc-log {
-            height: 160px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 12px;
-            overflow-y: auto;
-            font-family: 'Menlo', 'Monaco', monospace;
-            font-size: 0.8rem;
-            line-height: 1.5;
-            color: var(--text-secondary);
-            border: 1px solid var(--glass-border);
-        }
-
-        /* Custom scrollbar for logs */
-        .mc-log::-webkit-scrollbar { width: 6px; }
-        .mc-log::-webkit-scrollbar-track { background: transparent; }
-        .mc-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-
-        .log-entry { margin-bottom: 6px; }
-        .log-entry.info { color: var(--glow-cyan); }
-        .log-entry.warning { color: var(--warning-gold); }
-        .log-entry.critical { color: var(--danger-red); font-weight: 700; }
-        .log-entry.success { color: var(--sand-white); }
-
-        .mc-controls {
-            margin-top: 24px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
-
-        @media (max-width: 768px) {
-            #mission-control {
-                width: 100%;
-                bottom: 0;
-                border-radius: 24px 24px 0 0;
-                padding: 20px;
-                padding-bottom: max(20px, env(safe-area-inset-bottom));
-            }
-            .mc-grid { grid-template-columns: 1fr; gap: 20px; }
-            .mc-log { height: 120px; }
-        }
-
-        /* 
-         * Introduction Screen
-         * Cinematic, atmospheric entry.
-        */
-        #introduction {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 10000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at center, #002b3d 0%, #001219 70%);
-            opacity: 1;
-            transition: opacity 1.2s var(--ease-fluid);
-            cursor: pointer;
-        }
-
-        #introduction h1 {
-            font-family: var(--font-display);
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 300;
-            color: var(--sand-white);
-            letter-spacing: 0.15em;
-            margin: 0;
-            text-transform: uppercase;
-            background: linear-gradient(to bottom, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        #introduction p {
-            font-family: var(--font-ui);
-            font-size: 1.1rem;
-            font-weight: 300;
-            color: var(--glow-cyan);
-            margin-top: 1.5rem;
-            letter-spacing: 0.2rem;
-            text-transform: uppercase;
-            opacity: 0;
-            animation: slide-up-fade 1.5s ease-out 0.5s forwards;
-        }
-
-        #introduction .hint {
-            position: absolute;
-            bottom: 40px;
-            font-size: 0.8rem;
-            color: var(--text-tertiary);
-            opacity: 0;
-            animation: fade-in 1s ease 1.5s forwards;
-        }
-        
-        #introduction.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        @keyframes slide-up-fade {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 0.8; }
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        #constellation-canvas {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 0;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 2s ease;
-        }
-        #introduction.hidden ~ #constellation-canvas {
-            opacity: 1;
-        }
-
-        /*
-         * Filter Container
-         * Floating glass pill.
-        */
-        #filter-container {
-            position: fixed;
-            top: 32px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1001;
-            background: var(--glass-surface);
-            backdrop-filter: blur(var(--glass-blur));
-            -webkit-backdrop-filter: blur(var(--glass-blur));
-            padding: 6px;
-            border-radius: 99px;
-            border: 1px solid var(--glass-border);
-            display: flex;
-            gap: 4px;
-            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
-            opacity: 0;
-            animation: slide-down-fade 0.8s var(--ease-elastic) 0.5s forwards;
-        }
-
-        @keyframes slide-down-fade {
-            from { transform: translate(-50%, -20px); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
-        }
-
-        .filter-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            padding: 10px 20px;
-            border-radius: 99px;
-            cursor: pointer;
-            font-family: var(--font-ui);
-            font-weight: 500;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .filter-btn:hover {
-            color: var(--sand-white);
-            background: rgba(255,255,255,0.05);
-        }
-
-        .filter-btn.active {
-            background: var(--glow-cyan);
-            color: var(--abyss-deep);
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(127, 255, 212, 0.3);
-        }
-
-        /* Map Canvas */
+        /* --- MAP & OVERLAYS --- */
         #map {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-            background-color: var(--abyss-deep);
-        }
-        
-        .leaflet-tile-pane {
-            filter: grayscale(1) brightness(0.8) invert(0) sepia(0.1) hue-rotate(180deg) saturate(1.2) contrast(1.1);
-            transition: filter 0.8s ease;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+            background-color: var(--abyss-blue);
         }
 
+        .leaflet-tile-pane {
+            filter: grayscale(1) brightness(0.25) invert(0) sepia(0.2) hue-rotate(190deg) saturate(1.5) contrast(1.1);
+            transition: filter 1s var(--ease-fluid);
+        }
+
+        /* Tactical Mode: High Contrast, Green tint */
         #map.tactical-mode-active .leaflet-tile-pane {
-            filter: grayscale(1) brightness(0.4) contrast(1.4) sepia(0.2) hue-rotate(170deg);
+            filter: grayscale(1) brightness(0.3) sepia(1) hue-rotate(100deg) saturate(2) contrast(1.5);
         }
 
         /* Markers */
         .leaflet-marker-icon {
             border-radius: 50%;
-            background-color: var(--glow-cyan);
-            box-shadow: 0 0 0 4px rgba(0, 18, 25, 0.5), 0 0 20px var(--glow-cyan);
-            transition: all 0.5s var(--ease-elastic);
+            background-color: var(--abyss-blue);
+            border: 2px solid var(--glow-cyan);
+            box-shadow: 0 0 15px var(--glow-cyan-dim);
+            transition: all 0.4s var(--ease-snap);
         }
-        
-        .leaflet-marker-icon.dimmed {
-            opacity: 0.1;
-            transform: scale(0.5);
-            filter: grayscale(1);
-            pointer-events: none;
-        }
-
         .leaflet-marker-icon.active {
-            transform: scale(1.3);
-            background-color: #fff;
-            box-shadow: 0 0 0 6px rgba(0, 18, 25, 0.6), 0 0 40px #fff;
+            transform: scale(1.4) !important;
+            background-color: var(--glow-cyan);
+            box-shadow: 0 0 30px var(--glow-cyan-bright);
             z-index: 1000 !important;
+            border-color: #fff;
         }
-        
+        .leaflet-marker-icon.dimmed {
+            opacity: 0.1; filter: grayscale(1); transform: scale(0.6);
+        }
         .leaflet-control-container { display: none; }
 
-        /* 
-         * Info Panel
-         * Desktop: Left-side floating card. Mobile: Bottom sheet.
-        */
-        #info-panel {
-            position: fixed;
-            top: 100px;
-            left: 32px;
-            bottom: 32px;
-            width: 420px;
-            background: var(--glass-surface);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            color: var(--sand-white);
-            transform: translateX(-120%);
-            transition: transform 0.6s var(--ease-fluid), opacity 0.6s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            visibility: hidden;
-            opacity: 0;
-            overflow: hidden;
-        }
+        /* --- UI LAYER --- */
         
-        #info-panel.visible {
-            transform: translateX(0);
-            visibility: visible;
-            opacity: 1;
-        }
-        
-        #panel-image {
-            width: 100%;
-            height: 240px;
-            object-fit: cover;
-            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-            /* Transition removed to prevent scroll jank in app.js */
+        /* 1. TOP BAR: Filter Pill & Tactical Toggle */
+        #top-bar {
+            position: fixed; top: 24px; left: 0; width: 100%;
+            display: flex; justify-content: center; align-items: flex-start;
+            pointer-events: none; z-index: 1000;
+            padding: 0 24px;
         }
 
-        #panel-image.loading {
-            opacity: 0.5;
-            filter: blur(10px);
-            transition: opacity 0.5s ease, filter 0.5s ease;
+        #filter-container {
+            pointer-events: auto;
+            border-radius: 99px;
+            padding: 6px;
+            display: flex; gap: 4px;
+            opacity: 0;
+            animation: fade-in-down 0.8s var(--ease-fluid) 0.5s forwards;
+        }
+
+        @keyframes fade-in-down { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border-radius: 99px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .filter-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+        .filter-btn.active {
+            color: var(--abyss-blue);
+            background: var(--glow-cyan);
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(100, 255, 218, 0.4);
+        }
+
+        #tactical-toggle {
+            position: absolute; right: 24px; top: 0;
+            pointer-events: auto;
+            border-radius: 99px;
+            padding: 8px 16px;
+            display: flex; align-items: center; gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fade-in-down 0.8s var(--ease-fluid) 0.6s forwards;
+        }
+        #tactical-toggle:hover { background: rgba(255,255,255,0.1); }
+        #tactical-toggle.active {
+            background: rgba(100, 255, 218, 0.1);
+            border-color: var(--glow-cyan);
+            box-shadow: 0 0 20px var(--glow-cyan-dim);
+        }
+        #tactical-toggle span {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+        .toggle-icon {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--text-tertiary);
+            transition: background 0.3s;
+        }
+        #tactical-toggle.active .toggle-icon { background: var(--glow-cyan); box-shadow: 0 0 8px var(--glow-cyan); }
+
+
+        /* 2. INFO PANEL (DETAILS) */
+        #info-panel {
+            position: fixed; top: 100px; left: 32px; bottom: 32px; width: 400px;
+            z-index: 900;
+            display: flex; flex-direction: column;
+            transform: translateX(-120%);
+            transition: transform 0.6s var(--ease-fluid), opacity 0.6s ease;
+            opacity: 0; pointer-events: none;
+            border-radius: var(--panel-radius);
+            overflow: hidden;
+        }
+        #info-panel.visible {
+            transform: translateX(0); opacity: 1; pointer-events: auto;
+        }
+
+        .panel-image-container {
+            width: 100%; height: 260px; position: relative; overflow: hidden; flex-shrink: 0;
+        }
+        #panel-image {
+            width: 100%; height: 100%; object-fit: cover;
+            transition: transform 0.8s ease;
+        }
+        #panel-image.loading { opacity: 0; filter: blur(20px); }
+
+        /* Gradient overlay for text readability */
+        .panel-image-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to bottom, transparent 40%, var(--abyss-blue) 100%);
         }
 
         #panel-content {
-            padding: 0 32px 32px 32px;
-            overflow-y: auto;
-            flex: 1;
-            margin-top: -40px; /* Overlap with image */
-            position: relative;
+            flex: 1; padding: 0 32px 32px; overflow-y: auto;
+            mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 40px), transparent 100%);
+            margin-top: -60px; /* Pull up over image */
+            position: relative; z-index: 2;
         }
 
-        #panel-content h2 {
+        #panel-title {
             font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 500;
-            letter-spacing: -0.02em;
-            margin: 0;
-            color: #fff;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            font-size: 2.5rem; line-height: 1.1; font-weight: 500;
+            margin: 0 0 8px 0; color: #fff;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.8);
         }
 
-        #panel-content .type {
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--glow-cyan);
-            margin: 8px 0 24px 0;
+        .tag {
             display: inline-block;
-            background: rgba(127, 255, 212, 0.1);
-            padding: 4px 12px;
-            border-radius: 99px;
-            border: 1px solid rgba(127, 255, 212, 0.2);
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--abyss-blue); background: var(--glow-cyan);
+            padding: 4px 10px; border-radius: 4px; margin-bottom: 20px;
         }
 
-        #panel-content p {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--text-primary);
-            font-weight: 300;
+        #panel-description {
+            font-size: 1rem; line-height: 1.7; color: var(--text-primary);
+            margin-bottom: 24px; font-weight: 300;
         }
 
-        #panel-content .atmosphere {
-            font-size: 0.95rem;
-            line-height: 1.6;
-            color: var(--text-secondary);
-            margin-top: 24px;
-            font-style: italic;
-            border-left: 2px solid var(--glow-cyan);
-            padding-left: 16px;
+        .meta-row {
+            display: flex; gap: 16px; margin-bottom: 24px;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;
         }
-        
+        .meta-item { display: flex; flex-direction: column; }
+        .meta-label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .meta-val { font-family: var(--font-display); font-size: 0.9rem; color: var(--sand-white); }
+
+        #btn-add-expedition {
+            width: 100%; padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: var(--glow-cyan);
+            font-family: var(--font-display);
+            text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+        #btn-add-expedition:hover {
+            background: var(--glow-cyan); color: var(--abyss-blue);
+            box-shadow: 0 0 30px var(--glow-cyan-dim);
+            transform: translateY(-2px);
+        }
+        #btn-add-expedition.secondary {
+            border-color: var(--danger-red); color: var(--danger-red);
+        }
+        #btn-add-expedition.secondary:hover {
+            background: var(--danger-red); color: white;
+        }
+
         #close-panel {
-            position: absolute;
-            top: 20px; right: 20px;
-            width: 32px; height: 32px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 10;
+            position: absolute; top: 24px; right: 24px;
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10;
+            border: 1px solid rgba(255,255,255,0.1);
             transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
-        #close-panel:hover { background: rgba(0,0,0,0.6); }
-        #close-panel::before, #close-panel::after {
-            content: ''; position: absolute;
-            width: 14px; height: 1.5px;
-            background-color: #fff;
-        }
-        #close-panel::before { transform: rotate(45deg); }
-        #close-panel::after { transform: rotate(-45deg); }
+        #close-panel:hover { background: rgba(255,255,255,0.1); }
+        #close-panel svg { width: 14px; height: 14px; fill: white; }
 
-        /* Responsive Info Panel */
-        @media (max-width: 768px) {
-            #info-panel {
-                top: auto;
-                left: 0; right: 0; bottom: 0;
-                width: 100%;
-                height: 70vh;
-                border-radius: 24px 24px 0 0;
-                transform: translateY(110%);
-            }
-            #info-panel.visible { transform: translateY(0); }
-            #filter-container { top: 20px; width: 90%; overflow-x: auto; justify-content: flex-start; }
-            .filter-btn { flex-shrink: 0; padding: 8px 16px; font-size: 0.8rem; }
-        }
 
-        /* Expedition HUD */
+        /* 3. EXPEDITION HUD (RIGHT) */
         #expedition-hud {
-            position: fixed;
-            top: 100px;
-            right: 32px;
-            width: 280px;
-            background: var(--glass-surface);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 20px;
-            z-index: 1002;
-            color: var(--sand-white);
-            transform: translateX(150%);
+            position: fixed; top: 100px; right: 32px; width: 300px;
+            z-index: 900;
+            border-radius: var(--panel-radius);
+            padding: 24px;
+            color: var(--text-primary);
+            transform: translateX(120%);
             transition: transform 0.6s var(--ease-fluid);
-            box-shadow: var(--glass-shadow);
         }
-
         #expedition-hud.visible { transform: translateX(0); }
 
         .hud-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--glass-border);
-            margin-bottom: 12px;
+            display: flex; justify-content: space-between; align-items: baseline;
+            margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px;
         }
-
-        .hud-header h3 {
-            font-family: var(--font-display);
-            font-size: 0.9rem;
-            margin: 0;
+        .hud-title {
+            font-family: var(--font-display); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em;
             color: var(--glow-cyan);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
         }
-
-        #expedition-count { font-size: 0.75rem; color: var(--text-tertiary); font-weight: 600; }
+        .hud-count { font-size: 0.75rem; color: var(--text-tertiary); font-family: var(--font-display); }
 
         #expedition-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-bottom: 16px;
+            max-height: 30vh; overflow-y: auto; margin-bottom: 20px;
+            display: flex; flex-direction: column; gap: 8px;
         }
-
-        .expedition-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-        .expedition-item:last-child { border-bottom: none; }
-
-        .expedition-item .remove-btn {
-            cursor: pointer;
-            color: var(--danger-red);
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 4px;
+        .target-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.03); border-radius: 8px;
+            font-size: 0.85rem; color: var(--text-secondary);
             transition: background 0.2s;
         }
-        .expedition-item .remove-btn:hover { background: rgba(255, 77, 77, 0.1); }
-
-        .action-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 8px;
-            background: rgba(127, 255, 212, 0.1);
-            border: 1px solid var(--glow-cyan-dim);
-            color: var(--glow-cyan);
-            font-family: var(--font-display);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .target-row:hover { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+        .target-remove {
+            color: var(--text-tertiary); cursor: pointer; padding: 4px;
+            transition: color 0.2s;
         }
+        .target-remove:hover { color: var(--danger-red); }
 
-        .action-btn:hover {
-            background: var(--glow-cyan);
-            color: var(--abyss-deep);
-            box-shadow: 0 0 20px rgba(127, 255, 212, 0.3);
-            transform: translateY(-1px);
-        }
-
-        .action-btn.secondary {
-            border-color: rgba(255, 77, 77, 0.3);
-            color: var(--danger-red);
-            background: transparent;
-        }
-        .action-btn.secondary:hover {
-            background: var(--danger-red);
-            color: #fff;
-            box-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
-        }
-
-        .panel-action {
-            margin-top: 32px;
-            width: auto;
-            display: inline-block;
-            padding: 14px 28px;
-        }
-
-        /* Tactical Toggle */
-        #tactical-toggle {
-            position: fixed;
-            top: 32px;
-            right: 32px;
-            z-index: 1003;
-            display: flex;
-            align-items: center;
-            background: var(--glass-surface);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 99px;
-            padding: 8px 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        #tactical-toggle:hover { background: rgba(255,255,255,0.1); }
-
-        #tactical-toggle.active {
-            background: var(--glow-cyan);
-            color: var(--abyss-deep);
-            box-shadow: 0 0 20px var(--glow-cyan-dim);
-        }
-
-        #tactical-toggle span {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-left: 8px;
-        }
-
-        .toggle-icon {
-            width: 10px; height: 10px;
-            border: 2px solid currentColor;
-            border-radius: 50%;
-        }
-        #tactical-toggle.active .toggle-icon { background: var(--abyss-deep); }
-
-        /* Gear & Risk */
-        .gear-section { margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 16px; }
-        .gear-header { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.05em; }
-        .gear-list { display: flex; flex-wrap: wrap; gap: 8px; }
-        .gear-item {
-            font-size: 0.75rem; color: var(--text-secondary);
-            background: rgba(255,255,255,0.03);
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex; align-items: center;
-        }
-        .gear-item:hover { background: rgba(255,255,255,0.08); color: var(--sand-white); }
-        .gear-item input { margin-right: 8px; accent-color: var(--glow-cyan); }
-
-        #mission-risk {
-            margin-top: 12px;
-            padding: 10px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            font-size: 0.8rem;
-            display: flex; justify-content: space-between;
-            border: 1px solid var(--glass-border);
-        }
-        .risk-value { font-family: var(--font-display); }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.4s ease;
-        }
-        .modal-overlay.visible { opacity: 1; pointer-events: all; }
-
-        .modal-content {
-            background: #0d1f2d;
-            border: 1px solid var(--glow-cyan-dim);
-            padding: 40px;
-            width: 90%; max-width: 500px;
-            border-radius: 24px;
-            box-shadow: 0 0 50px rgba(127, 255, 212, 0.1);
-            transform: scale(0.95) translateY(20px);
-            transition: transform 0.4s var(--ease-elastic);
-        }
-        .modal-overlay.visible .modal-content { transform: scale(1) translateY(0); }
-
-        .modal-header {
+        .hud-stats {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px;
+            margin-bottom: 20px;
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 32px;
+        }
+        .risk-badge {
+            font-family: var(--font-display); font-weight: 700; font-size: 0.9rem;
+        }
+
+        /* Gear Checkboxes */
+        .gear-grid {
+            display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 24px;
+        }
+        .gear-item {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.8rem; color: var(--text-secondary);
+            cursor: pointer; user-select: none;
+            padding: 4px 0;
+        }
+        .gear-checkbox {
+            appearance: none; width: 16px; height: 16px;
+            border: 1px solid var(--text-tertiary); border-radius: 4px;
+            background: rgba(0,0,0,0.3);
+            display: grid; place-content: center;
+            transition: all 0.2s;
+        }
+        .gear-checkbox::before {
+            content: ""; width: 8px; height: 8px; transform: scale(0);
+            background-color: var(--glow-cyan); border-radius: 2px;
+            transition: transform 0.2s var(--ease-snap);
+        }
+        .gear-checkbox:checked { border-color: var(--glow-cyan); }
+        .gear-checkbox:checked::before { transform: scale(1); }
+
+        .btn-action {
+            width: 100%; padding: 12px;
+            background: var(--glow-cyan); color: var(--abyss-blue);
+            border: none; border-radius: 8px;
+            font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+            cursor: pointer; margin-bottom: 8px;
+            transition: transform 0.2s;
+        }
+        .btn-action:hover { transform: translateY(-1px); box-shadow: 0 4px 15px var(--glow-cyan-dim); }
+        .btn-action.secondary { background: rgba(255,255,255,0.05); color: var(--text-secondary); }
+        .btn-action.secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+
+        /* 4. MISSION CONTROL (BOTTOM CENTER) */
+        #mission-control {
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(150%);
+            width: 600px; height: auto;
+            z-index: 1000;
+            border-radius: var(--panel-radius);
+            padding: 0;
+            transition: transform 0.6s var(--ease-snap);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        #mission-control.visible { transform: translateX(-50%) translateY(0); }
+
+        .mc-top {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 16px 24px;
+            display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 16px;
         }
-        .modal-header h2 {
-            font-family: var(--font-display);
-            font-weight: 400; color: var(--glow-cyan);
-            margin: 0; letter-spacing: 0.1em;
+        .mc-title { font-family: var(--font-display); color: var(--glow-cyan); letter-spacing: 0.1em; }
+        .mc-timer { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: 1.2rem; }
+
+        .mc-body { padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+        .bars-container { display: flex; flex-direction: column; gap: 16px; }
+        .bar-wrap { display: flex; flex-direction: column; gap: 6px; }
+        .bar-meta { display: flex; justify-content: space-between; font-size: 0.75rem; text-transform: uppercase; color: var(--text-tertiary); letter-spacing: 0.05em; }
+        .bar-track { width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 99px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--glow-cyan); transition: width 0.5s ease; }
+
+        .log-container {
+            background: rgba(0,0,0,0.3); border-radius: 8px; padding: 12px;
+            height: 120px; overflow-y: auto;
+            font-family: monospace; font-size: 0.8rem; color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
         }
+        .log-line { margin-bottom: 4px; }
+        .log-line.critical { color: var(--danger-red); }
+        .log-line.success { color: var(--glow-cyan); }
 
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 1rem; }
-        .stat-label { color: var(--text-secondary); }
-        .stat-value { color: #fff; font-family: var(--font-display); }
 
-        .brief-summary {
-            margin-top: 32px; padding: 20px;
-            background: rgba(127, 255, 212, 0.05);
-            border-radius: 12px;
-            color: var(--text-primary);
-            line-height: 1.6;
+        /* 5. INTRODUCTION (SPLASH) */
+        #introduction {
+            position: fixed; inset: 0; z-index: 2000;
+            background: radial-gradient(circle at center, #051621 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 1s ease;
         }
+        #introduction.hidden { opacity: 0; pointer-events: none; }
 
-        /* Mobile Adjustments for Expedition HUD */
+        .intro-title {
+            font-family: var(--font-display); font-size: clamp(3rem, 10vw, 8rem); font-weight: 200;
+            letter-spacing: 0.2em; color: transparent;
+            background: linear-gradient(to bottom, #fff, #5f7485);
+            -webkit-background-clip: text; background-clip: text;
+            margin: 0; text-transform: uppercase;
+        }
+        .intro-sub {
+            font-family: var(--font-ui); font-size: 1rem; text-transform: uppercase; letter-spacing: 0.3em;
+            color: var(--glow-cyan); margin-top: 1rem; opacity: 0.8;
+        }
+        .intro-hint {
+            position: absolute; bottom: 40px; font-size: 0.8rem; color: var(--text-tertiary);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        #constellation-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.5; }
+
+
+        /* 6. BRIEFING MODAL */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            z-index: 3000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .modal-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            width: 90%; max-width: 500px;
+            background: #080f16; border: 1px solid var(--glow-cyan);
+            border-radius: 24px; padding: 40px;
+            box-shadow: 0 0 60px rgba(100, 255, 218, 0.1);
+            transform: scale(0.95); transition: transform 0.4s var(--ease-snap);
+        }
+        .modal-backdrop.visible .modal-card { transform: scale(1); }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; border-bottom: 1px solid var(--glass-border); padding-bottom: 16px; }
+        .modal-header h2 { margin: 0; font-family: var(--font-display); color: var(--glow-cyan); letter-spacing: 0.1em; font-weight: 400; }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .stat-block .label { font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; display: block; margin-bottom: 4px; }
+        .stat-block .val { font-family: var(--font-display); font-size: 1.1rem; color: white; }
+
+        .brief-text { font-size: 0.95rem; line-height: 1.6; color: var(--text-secondary); background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; }
+
+        .close-modal-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 1.5rem; }
+
+
+        /* --- MOBILE OPTIMIZATION --- */
         @media (max-width: 768px) {
-            #expedition-hud {
-                top: auto; bottom: 0; right: 0; left: 0;
-                width: 100%;
-                transform: translateY(110%);
+            /* Adjust Top Bar */
+            #top-bar { top: 12px; padding: 0 12px; justify-content: flex-start; }
+            #filter-container { overflow-x: auto; max-width: 70%; -webkit-overflow-scrolling: touch; padding: 4px; }
+            .filter-btn { padding: 6px 16px; font-size: 0.8rem; white-space: nowrap; flex-shrink: 0; }
+
+            #tactical-toggle { top: 0; right: 12px; padding: 6px 12px; }
+            #tactical-toggle span { display: none; } /* Icon only on mobile */
+            .toggle-icon { width: 12px; height: 12px; }
+
+            /* Bottom Sheet: Info Panel */
+            #info-panel {
+                top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: 75vh;
                 border-radius: 24px 24px 0 0;
-                padding-bottom: max(20px, env(safe-area-inset-bottom));
+                transform: translateY(110%);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+            #info-panel.visible { transform: translateY(0); }
+
+            .panel-handle {
+                position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+                width: 40px; height: 4px; background: rgba(255,255,255,0.2); border-radius: 99px;
+                z-index: 20;
+            }
+            #close-panel { top: 16px; right: 16px; width: 32px; height: 32px; }
+
+            .panel-image-container { height: 200px; }
+            #panel-content { margin-top: -30px; padding: 0 24px 24px; }
+            #panel-title { font-size: 2rem; }
+
+            /* Bottom Sheet: Expedition HUD */
+            #expedition-hud {
+                top: auto; left: 0; right: 0; bottom: 0; width: 100%; height: auto; max-height: 80vh;
+                border-radius: 24px 24px 0 0;
+                transform: translateY(110%);
+                padding-bottom: max(24px, env(safe-area-inset-bottom));
             }
             #expedition-hud.visible { transform: translateY(0); }
-            #tactical-toggle { top: auto; bottom: 32px; right: 20px; }
+
+            /* Mission Control Mobile */
+            #mission-control { width: 100%; bottom: 0; border-radius: 24px 24px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+            .mc-body { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+            .log-container { height: 80px; }
         }
     </style>
 </head>
 <body>
+    <!-- Background Elements -->
     <canvas id="constellation-canvas"></canvas>
-    <div id="tactical-toggle" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle Tactical Mode">
-        <div class="toggle-icon"></div>
-        <span>Tactical Mode</span>
+    <div id="map"></div>
+
+    <!-- Top UI Layer -->
+    <div id="top-bar">
+        <div id="filter-container" class="glass-panel" role="group" aria-label="Location Filters">
+            <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter-btn" data-filter="ruins" aria-pressed="false">Ruins</button>
+            <button class="filter-btn" data-filter="nature" aria-pressed="false">Nature</button>
+            <button class="filter-btn" data-filter="marine" aria-pressed="false">Marine</button>
+        </div>
+        <div id="tactical-toggle" class="glass-panel" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle Tactical Mode">
+            <div class="toggle-icon"></div>
+            <span>Tactical Mode</span>
+        </div>
     </div>
 
-    <div id="filter-container" role="group" aria-label="Location Filters">
-        <button class="filter-btn active" data-filter="all" aria-pressed="true">All</button>
-        <button class="filter-btn" data-filter="ruins" aria-pressed="false">Ruins</button>
-        <button class="filter-btn" data-filter="nature" aria-pressed="false">Nature</button>
-        <button class="filter-btn" data-filter="marine" aria-pressed="false">Marine</button>
+    <!-- Info Panel (Details) -->
+    <div id="info-panel" class="glass-panel" role="region" aria-label="Location Information">
+        <div class="panel-handle"></div> <!-- Visible only on mobile/css hook -->
+        <div class="panel-image-container">
+            <img id="panel-image" src="" alt="Location View">
+            <div class="panel-image-overlay"></div>
+        </div>
+        <div id="close-panel" role="button" tabindex="0" aria-label="Close Panel">
+            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </div>
+        <div id="panel-content">
+            <div id="panel-type" class="tag">Marine</div>
+            <h2 id="panel-title">Great Blue Hole</h2>
+
+            <div class="meta-row">
+                <div class="meta-item">
+                    <span class="meta-label">Risk Level</span>
+                    <span class="meta-val" style="color: var(--danger-red)">CRITICAL</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Access</span>
+                    <span class="meta-val">COMPLEX</span>
+                </div>
+            </div>
+
+            <p id="panel-description">Description goes here.</p>
+            <div id="panel-atmosphere" style="font-style: italic; color: var(--text-tertiary); margin-bottom: 24px; border-left: 2px solid var(--glow-cyan); padding-left: 12px;"></div>
+
+            <button id="btn-add-expedition" class="btn-reset">Initialize Target</button>
+        </div>
     </div>
 
-    <!-- Strategic HUD for Expedition Planning -->
-    <div id="expedition-hud">
+    <!-- Expedition HUD -->
+    <div id="expedition-hud" class="glass-panel">
         <div class="hud-header">
-            <h3>Expedition Log</h3>
-            <span id="expedition-count">0 Targets</span>
+            <span class="hud-title">Expedition Log</span>
+            <span id="expedition-count" class="hud-count">0 Targets</span>
         </div>
 
-        <div id="mission-risk">
-            <span>Risk Profile:</span>
-            <span id="risk-display" class="risk-value" style="color: #7fffd4">LOW</span>
+        <div class="hud-stats">
+            <span style="font-size: 0.8rem; color: var(--text-secondary);">Risk Profile</span>
+            <span id="risk-display" class="risk-badge" style="color: var(--glow-cyan)">LOW</span>
         </div>
 
         <div id="expedition-list">
-            <!-- Targets added here -->
+            <!-- Items injected here -->
         </div>
 
-        <div class="gear-section">
-            <div class="gear-header">Required Loadout</div>
-            <div id="gear-container" class="gear-list">
-                <!-- Dynamically populated -->
+        <div style="margin: 20px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+            <span style="font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; display:block; margin-bottom: 10px;">Required Loadout</span>
+            <div id="gear-container" class="gear-grid">
+                <!-- Gear items injected here -->
             </div>
         </div>
 
-        <div class="hud-footer" style="margin-top: 15px;">
-            <button id="btn-generate-brief" class="action-btn">Generate Brief</button>
-            <button id="btn-simulate-mission" class="action-btn" style="border-color: #ffd93d; color: #ffd93d;">Simulate</button>
-            <button id="btn-clear-expedition" class="action-btn secondary">Clear</button>
-        </div>
+        <button id="btn-generate-brief" class="btn-action">Generate Brief</button>
+        <button id="btn-simulate-mission" class="btn-action" style="background: transparent; border: 1px solid var(--warning-gold); color: var(--warning-gold);">Simulate</button>
+        <button id="btn-clear-expedition" class="btn-action secondary">Clear</button>
     </div>
 
-    <!-- Mission Control Panel -->
-    <div id="mission-control">
-        <div class="mc-header">
-            <span class="mc-title">Sentinel: Live Operations</span>
+    <!-- Mission Control -->
+    <div id="mission-control" class="glass-panel">
+        <div class="mc-top">
+            <span class="mc-title">Sentinel: Live Ops</span>
             <span id="mc-timer" class="mc-time">00:00:00</span>
         </div>
-        <div class="mc-grid">
-            <div class="mc-stats">
-                <div class="stat-bar-container">
-                    <div class="stat-bar-label"><span>Integrity</span><span id="val-integrity">100%</span></div>
-                    <div class="stat-bar-bg"><div id="bar-integrity" class="stat-bar-fill"></div></div>
+        <div class="mc-body">
+            <div class="bars-container">
+                <div class="bar-wrap">
+                    <div class="bar-meta"><span>Integrity</span><span id="val-integrity">100%</span></div>
+                    <div class="bar-track"><div id="bar-integrity" class="bar-fill"></div></div>
                 </div>
-                <div class="stat-bar-container">
-                    <div class="stat-bar-label"><span>Supplies</span><span id="val-supplies">100%</span></div>
-                    <div class="stat-bar-bg"><div id="bar-supplies" class="stat-bar-fill"></div></div>
+                <div class="bar-wrap">
+                    <div class="bar-meta"><span>Supplies</span><span id="val-supplies">100%</span></div>
+                    <div class="bar-track"><div id="bar-supplies" class="bar-fill"></div></div>
                 </div>
-                <div class="stat-bar-container">
-                    <div class="stat-bar-label"><span>Fatigue</span><span id="val-fatigue">0%</span></div>
-                    <div class="stat-bar-bg"><div id="bar-fatigue" class="stat-bar-fill" style="background: #ff6b6b; width: 0%;"></div></div>
+                <div class="bar-wrap">
+                    <div class="bar-meta"><span>Fatigue</span><span id="val-fatigue">0%</span></div>
+                    <div class="bar-track"><div id="bar-fatigue" class="bar-fill" style="background: var(--danger-red); width: 0%;"></div></div>
                 </div>
             </div>
-            <div id="mc-log-container" class="mc-log">
-                <!-- Logs go here -->
-            </div>
+            <div id="mc-log-container" class="log-container"></div>
         </div>
-        <div class="mc-controls">
-            <button id="btn-mc-pause" class="action-btn">Pause</button>
-            <button id="btn-mc-abort" class="action-btn secondary">Abort</button>
+        <div style="padding: 16px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px;">
+            <button id="btn-mc-pause" class="btn-action" style="width: auto; padding: 8px 20px; font-size: 0.8rem;">Pause</button>
+            <button id="btn-mc-abort" class="btn-action secondary" style="width: auto; padding: 8px 20px; font-size: 0.8rem;">Abort</button>
         </div>
     </div>
 
     <!-- Briefing Modal -->
-    <div id="briefing-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="briefing-title">
-        <div class="modal-content">
+    <div id="briefing-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="briefing-title">
+        <div class="modal-card">
+            <button id="close-briefing" class="close-modal-btn" aria-label="Close Briefing">&times;</button>
             <div class="modal-header">
                 <h2 id="briefing-title">Mission Briefing</h2>
-                <div id="close-briefing" class="close-modal" role="button" tabindex="0" aria-label="Close Briefing"></div>
             </div>
             <div class="modal-body">
-                <div class="stat-row">
-                    <span class="stat-label">Codename:</span>
-                    <span id="brief-codename" class="stat-value">ALPHA</span>
+                <div class="stat-grid">
+                    <div class="stat-block"><span class="label">Codename</span><span id="brief-codename" class="val">ALPHA</span></div>
+                    <div class="stat-block"><span class="label">ETA</span><span id="brief-eta" class="val">--</span></div>
+                    <div class="stat-block"><span class="label">Distance</span><span id="brief-distance" class="val">--</span></div>
+                    <div class="stat-block"><span class="label">Terrain</span><span id="brief-terrain" class="val">--</span></div>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">Total Distance:</span>
-                    <span id="brief-distance" class="stat-value">0 km</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Est. Time (ETA):</span>
-                    <span id="brief-eta" class="stat-value">0h 0m</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Risk Assessment:</span>
-                    <span id="brief-risk" class="stat-value">LOW</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Primary Terrain:</span>
-                    <span id="brief-terrain" class="stat-value">Unknown</span>
-                </div>
-                <div class="brief-summary">
-                    <p id="brief-text">Intel suggests a highly optimized route through <span id="brief-count">0</span> strategic locations. Prepare for deployment.</p>
-                </div>
-                <div id="brief-warnings" style="color: #ff6b6b; font-size: 0.9rem; margin-top: 10px; display: none;">
-                    WARNING: Critical gear missing for this operation.
+                <div class="brief-text">
+                    <p id="brief-text">Calculating...</p>
+                    <div id="brief-warnings" style="color: var(--danger-red); font-weight: 700; margin-top: 10px; display: none;"></div>
+                    <span id="brief-count" style="display:none"></span>
+                    <span id="brief-risk" style="display:none"></span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="introduction" role="button" tabindex="0" aria-label="Enter Application">
-        <h1>BELIZE</h1>
-        <p>An Elemental Journey</p>
-        <p style="font-size: 0.8rem; margin-top: 2rem; opacity: 0.7;">Click or Press Enter to Begin</p>
+    <!-- Intro Splash -->
+    <div id="introduction" role="button" tabindex="0" aria-label="Start Application">
+        <h1 class="intro-title">Belize</h1>
+        <div class="intro-sub">An Elemental Journey</div>
+        <div class="intro-hint">Press Enter or Click to Begin</div>
     </div>
 
-    <div id="map"></div>
-
-    <div id="info-panel" role="region" aria-label="Location Information">
-        <img id="panel-image" src="" alt="">
-        <div id="panel-content">
-            <h2 id="panel-title"></h2>
-            <div id="panel-type" class="type"></div>
-            <p id="panel-description"></p>
-            <div id="panel-atmosphere" class="atmosphere"></div>
-            <button id="btn-add-expedition" class="action-btn panel-action">Initialize Target</button>
-        </div>
-        <div id="close-panel" role="button" tabindex="0" aria-label="Close Information Panel"></div>
-    </div>
-
+    <!-- Scripts -->
     <script src="constellations.js"></script>
     <script src="LogisticsCore.js"></script>
     <script src="StrategicPathfinder.js"></script>

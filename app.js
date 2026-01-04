@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
         locations.forEach(location => {
             const icon = L.divIcon({
                 className: 'leaflet-marker-icon',
-                iconSize: [200, 200]
+                iconSize: [20, 20]
             });
             const marker = L.marker(location.coords, { icon: icon, keyboard: false }).addTo(map);
 
