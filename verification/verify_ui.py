@@ -2,53 +2,56 @@
 from playwright.sync_api import sync_playwright
 import os
 
-def verify_ui():
+def run():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
+        # Emulate desktop
+        page = browser.new_page(viewport={'width': 1920, 'height': 1080})
 
-        cwd = os.getcwd()
-        page.goto(f"file://{cwd}/index.html")
+        # Load the local file
+        path = os.path.abspath("index.html")
+        page.goto(f"file://{path}")
 
+        # Wait for the intro to appear
         page.wait_for_selector("#introduction")
-        page.screenshot(path="verification/1_intro.png")
-        print("Captured 1_intro.png")
 
+        # Click the intro to start
         page.click("#introduction")
 
-        page.wait_for_selector("#tactical-toggle")
-        page.wait_for_timeout(2000)
+        # Wait for map and UI
+        page.wait_for_selector("#filter-container", state="visible")
+        page.wait_for_timeout(2000) # Wait for animations
 
-        page.screenshot(path="verification/2_map_view.png")
-        print("Captured 2_map_view.png")
+        # Screenshot Desktop
+        page.screenshot(path="verification/desktop_view.png")
 
-        page.click("#tactical-toggle")
-        page.wait_for_timeout(1000)
-        page.screenshot(path="verification/3_tactical_mode.png")
-        print("Captured 3_tactical_mode.png")
+        # --- Mobile Simulation ---
+        context_mobile = browser.new_context(
+            viewport={'width': 375, 'height': 812},
+            user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 12_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1',
+            is_mobile=True
+        )
+        page_mobile = context_mobile.new_page()
+        page_mobile.goto(f"file://{path}")
 
-        page.click("#tactical-toggle")
+        page_mobile.click("#introduction")
+        page_mobile.wait_for_selector("#filter-container", state="visible")
+        page_mobile.wait_for_timeout(2000)
 
-        page.wait_for_selector(".leaflet-marker-icon")
-
-        markers = page.locator(".leaflet-marker-icon")
+        # Click a marker to show bottom sheet
+        # Leaflet markers are divs with class 'leaflet-marker-icon'
+        # We need to wait for them to render
+        page_mobile.wait_for_selector(".leaflet-marker-icon")
+        markers = page_mobile.locator(".leaflet-marker-icon")
+        # Click the first one
         if markers.count() > 0:
             markers.first.click()
-            print("Clicked marker")
+            page_mobile.wait_for_selector("#info-panel.visible")
+            page_mobile.wait_for_timeout(1000)
 
-            page.wait_for_selector("#info-panel.visible")
-            page.wait_for_timeout(1000)
-            page.screenshot(path="verification/4_info_panel.png")
-            print("Captured 4_info_panel.png")
-
-            page.click("#btn-add-expedition")
-
-            page.wait_for_selector("#expedition-hud.visible")
-            page.wait_for_timeout(500)
-            page.screenshot(path="verification/5_hud.png")
-            print("Captured 5_hud.png")
+        page_mobile.screenshot(path="verification/mobile_view.png")
 
         browser.close()
 
 if __name__ == "__main__":
-    verify_ui()
+    run()
