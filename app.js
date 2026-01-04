@@ -220,6 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Briefing Modal elements
     const briefingModal = document.getElementById('briefing-modal');
     const closeBriefing = document.getElementById('close-briefing');
+    const btnSaveScenario = document.getElementById('btn-save-scenario');
+    const btnBriefExecute = document.getElementById('btn-brief-execute');
     const briefCodename = document.getElementById('brief-codename');
     const briefDistance = document.getElementById('brief-distance');
     const briefTerrain = document.getElementById('brief-terrain');
@@ -242,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modules
     const logisticsCore = new LogisticsCore();
+    const decisionSupport = new DecisionSupport(logisticsCore);
     let tacticalOverlay;
     let missionSimulator;
     let strategicPathfinder;
@@ -253,6 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const filterContainer = document.getElementById('filter-container');
     const filterButtons = document.querySelectorAll('.filter-btn');
+
+    // Create Archives Button dynamically
+    const archivesButton = document.createElement('button');
+    archivesButton.className = 'filter-btn';
+    archivesButton.textContent = 'Archives';
+    archivesButton.style.marginLeft = '12px';
+    archivesButton.style.borderLeft = '1px solid rgba(255,255,255,0.1)';
+    archivesButton.style.paddingLeft = '16px';
+    archivesButton.setAttribute('aria-label', 'Open Tactical Archives');
+    filterContainer.appendChild(archivesButton);
 
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -685,6 +698,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Staging for current briefing data
+    let currentBriefingData = null;
+
     // Handle "Generate Brief"
     btnGenerateBrief.addEventListener('click', () => {
         const list = expeditionManager.getExpedition();
@@ -707,6 +723,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const themeList = themes[dominant] || themes['other'];
         const randomTheme = themeList[Math.floor(Math.random() * themeList.length)];
         const codeName = `OP: ${randomTheme} ${Math.floor(Math.random() * 90 + 10)}`;
+
+        // Store data for saving
+        currentBriefingData = {
+            name: codeName,
+            locations: list,
+            gear: selectedGear,
+            metrics: {
+                totalDistance: analysis.totalDistance
+            }
+        };
 
         briefCodename.textContent = codeName;
         briefDistance.textContent = `${analysis.totalDistance} km`;
@@ -734,7 +760,6 @@ document.addEventListener('DOMContentLoaded', () => {
             briefWarnings.style.display = 'none';
         } else {
             const warningText = document.createElement('div');
-            warningText.innerHTML = "<br><strong>CAUTION: Logistical gaps identified.</strong>"; // innerHTML used for strong tag, but content is static static string.
             // Cleaner approach for the second part:
             briefText.appendChild(document.createElement('br'));
             const strong = document.createElement('strong');
@@ -747,12 +772,164 @@ document.addEventListener('DOMContentLoaded', () => {
 
         briefingModal.classList.add('visible');
         briefingModal.setAttribute('aria-hidden', 'false');
-        closeBriefing.focus(); // Set initial focus
+        btnBriefExecute.focus(); // Set initial focus
+    });
+
+    btnBriefExecute.addEventListener('click', () => {
+         // Execute Mission
+         closeBriefingModal();
+         // Simulate button logic
+         const list = expeditionManager.getExpedition();
+         if (list.length < 2) return;
+         expeditionHud.classList.remove('visible');
+         missionControlPanel.classList.add('visible');
+         mcLogContainer.innerHTML = '';
+         missionSimulator.start(list);
+         if (!tacticalOverlay.isVisible) {
+             tacticalOverlay.show();
+             tacticalToggle.classList.add('active');
+         }
+    });
+
+    btnSaveScenario.addEventListener('click', () => {
+        if (!currentBriefingData) return;
+        const saved = decisionSupport.saveScenario(
+            currentBriefingData.name,
+            currentBriefingData.locations,
+            currentBriefingData.gear,
+            currentBriefingData.metrics
+        );
+        if (saved) {
+            alert(`Scenario "${saved.name}" archived successfully.`);
+            closeBriefingModal();
+        }
     });
 
     closeBriefing.addEventListener('click', () => {
         closeBriefingModal();
     });
+
+    // Archives Modal Logic
+    const archivesModal = document.getElementById('archives-modal');
+    const closeArchives = document.getElementById('close-archives');
+    const archivesList = document.getElementById('archives-list');
+    const archivesDetails = document.getElementById('archives-details');
+
+    archivesButton.addEventListener('click', () => {
+        openArchives();
+    });
+
+    closeArchives.addEventListener('click', () => {
+        archivesModal.classList.remove('visible');
+        archivesModal.setAttribute('aria-hidden', 'true');
+    });
+
+    // Close on click outside
+    archivesModal.addEventListener('click', (e) => {
+        if (e.target === archivesModal) {
+            archivesModal.classList.remove('visible');
+            archivesModal.setAttribute('aria-hidden', 'true');
+        }
+    });
+
+    function openArchives() {
+        const scenarios = decisionSupport.getScenarios();
+        archivesList.innerHTML = '';
+        archivesDetails.innerHTML = '<span style="color: var(--text-tertiary);">Select a mission profile to analyze.</span>';
+
+        if (scenarios.length === 0) {
+            archivesList.innerHTML = '<div style="padding: 20px; color: var(--text-tertiary);">No archives found.</div>';
+        } else {
+            scenarios.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'target-row'; // Reuse style
+                item.style.cursor = 'pointer';
+                item.style.marginBottom = '8px';
+
+                const date = new Date(s.timestamp).toLocaleDateString();
+                item.innerHTML = `
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="color: var(--glow-cyan); font-weight:600;">${s.name}</span>
+                        <span style="font-size: 0.75rem; color: var(--text-tertiary);">${date} • ${s.analysis.riskLabel}</span>
+                    </div>
+                    <div style="font-size:1.2rem;">›</div>
+                `;
+
+                item.addEventListener('click', () => showArchiveDetails(s));
+                archivesList.appendChild(item);
+            });
+        }
+
+        archivesModal.classList.add('visible');
+        archivesModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function showArchiveDetails(scenario) {
+        const a = scenario.analysis;
+        archivesDetails.innerHTML = `
+            <h3 style="font-family: var(--font-display); color: var(--glow-cyan); font-size: 1.5rem; margin-bottom: 5px;">${scenario.name}</h3>
+            <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-bottom: 24px;">UUID: ${scenario.id.substring(0,8)}...</div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; margin-bottom: 24px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                    <span style="display:block; font-size:0.7rem; color:var(--text-tertiary);">DURATION</span>
+                    <span style="font-size:1.2rem; font-family:var(--font-display);">${Math.floor(a.durationHours)}h ${Math.round((a.durationHours%1)*60)}m</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                    <span style="display:block; font-size:0.7rem; color:var(--text-tertiary);">RISK SCORE</span>
+                    <span style="font-size:1.2rem; font-family:var(--font-display); color:${a.riskColor};">${a.riskScore}/100</span>
+                </div>
+            </div>
+
+            <div style="width: 100%; text-align: left; margin-bottom: 24px;">
+                <span style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px; display:block;">PREDICTED RESOURCE DRAIN</span>
+                <div style="margin-bottom: 8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;"><span>Supplies</span><span>${a.predictedSupplies}%</span></div>
+                    <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:99px;"><div style="width:${Math.min(a.predictedSupplies, 100)}%; background:var(--glow-cyan); height:100%;"></div></div>
+                </div>
+                <div style="margin-bottom: 8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;"><span>Fatigue</span><span>${a.predictedFatigue}%</span></div>
+                    <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:99px;"><div style="width:${Math.min(a.predictedFatigue, 100)}%; background:var(--warning-gold); height:100%;"></div></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button id="btn-load-scenario" class="btn-action">Load & Deploy</button>
+                <button id="btn-delete-scenario" class="btn-action secondary" style="border: 1px solid var(--danger-red); color: var(--danger-red);">Delete</button>
+            </div>
+        `;
+
+        document.getElementById('btn-load-scenario').addEventListener('click', () => {
+            loadScenarioIntoExpedition(scenario);
+            archivesModal.classList.remove('visible');
+            archivesModal.setAttribute('aria-hidden', 'true');
+        });
+
+        document.getElementById('btn-delete-scenario').addEventListener('click', () => {
+            if(confirm('Confirm deletion of tactical record?')) {
+                decisionSupport.deleteScenario(scenario.id);
+                openArchives(); // Refresh
+            }
+        });
+    }
+
+    function loadScenarioIntoExpedition(scenario) {
+        // Clear current
+        expeditionManager.clear();
+
+        // Restore locations (Sequentially to maintain order)
+        // We have the raw location objects in scenario.locations.
+        // ExpeditionManager.addLocation expects a location object.
+        scenario.locations.forEach(loc => {
+            expeditionManager.addLocation(loc);
+        });
+
+        // Restore gear
+        selectedGear = [...scenario.gear];
+        updateExpeditionUI(); // This will re-render checkboxes based on selectedGear global
+
+        alert(`Mission Profile "${scenario.name}" Loaded.`);
+    }
 
     // --- EXPEDITION LOGIC END ---
 

@@ -96,13 +96,13 @@
         }
 
         /**
-         * Calculates the estimated time of arrival (ETA) for a given route.
+         * Calculates the raw duration in hours for a given route.
          * @param {Array} locations - The list of location objects in the route.
          * @param {number} totalDistance - Total distance in km.
-         * @returns {string} - Formatted duration string (e.g., "4h 30m").
+         * @returns {number} - Duration in hours.
          */
-        calculateETA(locations, totalDistance) {
-            if (!locations || locations.length < 2) return "N/A";
+        calculateDurationHours(locations, totalDistance) {
+            if (!locations || locations.length < 2) return 0;
 
             // Calculate weighted speed based on terrain composition
             let totalWeightedSpeed = 0;
@@ -113,16 +113,70 @@
             });
 
             const avgSpeed = totalWeightedSpeed / locations.length;
-            const hours = totalDistance / avgSpeed;
+            const travelHours = totalDistance / avgSpeed;
 
-            // Add 1 hour overhead per stop for "boots on ground" time
-            const stopOverhead = (locations.length - 2) * 1.5;
+            // Add 1.5 hour overhead per stop (excluding start/end) for "boots on ground" time
+            // If there are 2 locations (start/end), overhead is 0.
+            const stopOverhead = Math.max(0, (locations.length - 2) * 1.5);
 
-            const totalHours = hours + stopOverhead;
+            return travelHours + stopOverhead;
+        }
+
+        /**
+         * Calculates the estimated time of arrival (ETA) for a given route.
+         * @param {Array} locations - The list of location objects in the route.
+         * @param {number} totalDistance - Total distance in km.
+         * @returns {string} - Formatted duration string (e.g., "4h 30m").
+         */
+        calculateETA(locations, totalDistance) {
+            const totalHours = this.calculateDurationHours(locations, totalDistance);
+            if (totalHours === 0) return "N/A";
+
             const h = Math.floor(totalHours);
             const m = Math.round((totalHours - h) * 60);
 
             return `${h}h ${m}m`;
+        }
+
+        /**
+         * Estimates the total resource cost for a mission profile without running the simulation.
+         * @param {Array} locations - The list of location objects.
+         * @param {number} totalDistance - Total distance in km.
+         * @returns {Object} - { supplies: number, fatigue: number, integrity: number }
+         */
+        estimateMissionCost(locations, totalDistance) {
+            const totalHours = this.calculateDurationHours(locations, totalDistance);
+
+            // Calculate average terrain drain
+            // We simulate the route by averaging the terrain types
+            let totalSupplies = 0;
+            let totalFatigue = 0;
+            let totalIntegrity = 0;
+
+            if (locations.length < 2) return { supplies: 0, fatigue: 0, integrity: 0 };
+
+            // Approximate the time spent in each leg
+            // Simplified: Divide total time by number of legs
+            const legs = locations.length - 1;
+            const hoursPerLeg = totalHours / legs;
+
+            for (let i = 0; i < legs; i++) {
+                // Use the destination terrain for the leg (conservative estimate)
+                const targetLoc = locations[i+1];
+                const type = targetLoc.type_category || 'other';
+
+                const drain = this.calculateResourceDrain(type, hoursPerLeg);
+
+                totalSupplies += drain.supplies;
+                totalFatigue += drain.fatigue;
+                totalIntegrity += drain.integrity;
+            }
+
+            return {
+                supplies: parseFloat(totalSupplies.toFixed(1)),
+                fatigue: parseFloat(totalFatigue.toFixed(1)),
+                integrity: parseFloat(totalIntegrity.toFixed(1))
+            };
         }
 
         /**
