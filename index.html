@@ -652,6 +652,28 @@
                     <span id="brief-count" style="display:none"></span>
                     <span id="brief-risk" style="display:none"></span>
                 </div>
+                <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                     <button id="btn-save-scenario" class="btn-action secondary" style="width: auto; margin:0;">Save to Archives</button>
+                     <button id="btn-brief-execute" class="btn-action" style="width: auto; margin:0;">Execute</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tactical Archives Modal -->
+    <div id="archives-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="archives-title">
+        <div class="modal-card" style="width: 100%; max-width: 800px; height: 600px; display: flex; flex-direction: column;">
+            <button id="close-archives" class="close-modal-btn" aria-label="Close Archives">&times;</button>
+            <div class="modal-header">
+                <h2 id="archives-title">Tactical Archives</h2>
+            </div>
+            <div class="modal-body" style="display: flex; gap: 24px; flex: 1; min-height: 0;">
+                <div id="archives-list" class="archives-list" style="flex: 1; overflow-y: auto; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1);">
+                    <!-- Dynamic List -->
+                </div>
+                <div id="archives-details" class="archives-details" style="flex: 1.5; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <span style="color: var(--text-tertiary);">Select a mission profile to analyze.</span>
+                </div>
             </div>
         </div>
     </div>
@@ -666,6 +688,7 @@
     <!-- Scripts -->
     <script src="constellations.js"></script>
     <script src="LogisticsCore.js"></script>
+    <script src="DecisionSupport.js"></script>
     <script src="StrategicPathfinder.js"></script>
     <script src="TacticalOverlay.js"></script>
     <script src="expedition.js"></script>
