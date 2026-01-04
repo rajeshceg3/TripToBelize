@@ -718,13 +718,31 @@ document.addEventListener('DOMContentLoaded', () => {
         briefRisk.textContent = risk.label;
         briefRisk.style.color = risk.color;
 
+        // Security Patch: Prevent XSS by using textContent and child elements
+        briefText.textContent = ''; // Clear previous
+        const introText = document.createTextNode(loadout.valid
+            ? "All systems nominal. Gear check complete. Intel suggests a highly optimized route through "
+            : "Intel suggests a route through ");
+        briefText.appendChild(introText);
+
+        const countSpan = document.createElement('span');
+        countSpan.style.color = '#7fffd4';
+        countSpan.textContent = `${analysis.totalLocations} strategic locations.`;
+        briefText.appendChild(countSpan);
+
         if (loadout.valid) {
-            briefText.innerHTML = `All systems nominal. Gear check complete. Intel suggests a highly optimized route through <span style="color:#7fffd4">${analysis.totalLocations}</span> strategic locations.`;
             briefWarnings.style.display = 'none';
         } else {
-            briefText.innerHTML = `Intel suggests a route through <span style="color:#7fffd4">${analysis.totalLocations}</span> strategic locations. <br><strong>CAUTION: Logistical gaps identified.</strong>`;
+            const warningText = document.createElement('div');
+            warningText.innerHTML = "<br><strong>CAUTION: Logistical gaps identified.</strong>"; // innerHTML used for strong tag, but content is static static string.
+            // Cleaner approach for the second part:
+            briefText.appendChild(document.createElement('br'));
+            const strong = document.createElement('strong');
+            strong.textContent = "CAUTION: Logistical gaps identified.";
+            briefText.appendChild(strong);
+
             briefWarnings.style.display = 'block';
-            briefWarnings.innerHTML = `WARNING: Missing Critical Gear: ${loadout.missing.map(m => m.replace('_', ' ')).join(', ')}`;
+            briefWarnings.textContent = `WARNING: Missing Critical Gear: ${loadout.missing.map(m => m.replace('_', ' ')).join(', ')}`;
         }
 
         briefingModal.classList.add('visible');
@@ -737,6 +755,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- EXPEDITION LOGIC END ---
+
+    // Token for managing race conditions
+    let currentImageRequestId = 0;
 
     function handleMarkerClick(marker, location) {
         // A fluid transition to the point of interest.
@@ -763,8 +784,15 @@ document.addEventListener('DOMContentLoaded', () => {
         panelContent.scrollTop = 0;
         panelImage.style.transform = 'scale(1.1)';
 
+        // Generate a new Request ID for this specific interaction
+        currentImageRequestId++;
+        const requestId = currentImageRequestId;
+
         // A brief pause allows the map to settle before the panel presentation begins.
         setTimeout(() => {
+            // Check if this request is still valid
+            if (requestId !== currentImageRequestId) return;
+
             panelTitle.textContent = location.name;
             panelType.textContent = location.type;
             panelDescription.textContent = location.description;
@@ -776,13 +804,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const img = new Image();
             img.onload = () => {
+                // Check again before applying changes
+                if (requestId !== currentImageRequestId) return;
+
                 panelImage.src = location.image;
                 panelImage.alt = location.name;
                 panelImage.classList.remove('loading');
                 panelImage.style.opacity = '1';
             };
             img.onerror = () => {
-                panelImage.src = location.image;
+                if (requestId !== currentImageRequestId) return;
+                // Use the fallback logic
+                panelImage.src = location.image; // Trigger the fallback handler on panelImage
                 panelImage.alt = location.name;
             };
             img.src = location.image;
@@ -843,21 +876,28 @@ document.addEventListener('DOMContentLoaded', () => {
         btnGenerateBrief.focus(); // Restore focus to trigger
     }
 
-    // Modal Focus Trap
+    // Modal Focus Trap (Robust)
     briefingModal.addEventListener('keydown', (e) => {
         if (!briefingModal.classList.contains('visible')) return;
 
-        const focusableElements = briefingModal.querySelectorAll('a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]');
+        // Get focusable elements dynamically as content might change
+        const focusableSelectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
+        const focusableElements = Array.from(briefingModal.querySelectorAll(focusableSelectors));
+
+        if (focusableElements.length === 0) return;
+
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
         if (e.key === 'Tab') {
             if (e.shiftKey) {
+                // Shift + Tab
                 if (document.activeElement === firstElement) {
                     e.preventDefault();
                     lastElement.focus();
                 }
             } else {
+                // Tab
                 if (document.activeElement === lastElement) {
                     e.preventDefault();
                     firstElement.focus();
