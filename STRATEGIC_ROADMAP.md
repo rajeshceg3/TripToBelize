@@ -1,76 +1,137 @@
 # STRATEGIC ROADMAP: OPERATION IRONCLAD
 
 **Target:** Repository "TripToBelize"
-**Objective:** Production Readiness & UX Supremacy
+**Classification:** CLASSIFIED // TECHNICAL EYES ONLY
 **Author:** Jules, Lead Technical Operator
-**Status:** ACTIVE
+**Date:** 2024-05-23
+**Status:** ACTIVE PLANNING
 
-## 1. EXECUTIVE SUMMARY
+---
 
-The current system demonstrates high-potential tactical logic (pathfinding, logistics) but suffers from "prototype-grade" architecture. Critical systems are tightly coupled, the global namespace is polluted, and security boundaries are non-existent.
+## 1. SITUATION REPORT (SITREP)
 
-**Mission Goal:** Transform the repository into a fortified, scalable, and user-centric production system.
+### 1.1 Overview
+The "TripToBelize" repository is a tactical mission planner designed for expedition logistics and risk assessment. While the core algorithmic assets (Pathfinding, Logistics) show promise, the system's current architecture is a "Prototype-Grade" monolith. It lacks the structural integrity, security hardening, and operational efficiency required for a "Production-Ready" deployment.
 
-## 2. TACTICAL ASSESSMENT
+### 1.2 Asset Inventory
+*   **Frontend:** HTML5/CSS3 (Glassmorphism UI), Leaflet.js (Mapping).
+*   **Logic:** Vanilla JavaScript (ES6+), UMD Modules.
+*   **Data:** JSON-like structures embedded in code (`app.js`).
+*   **Testing:** Custom `test_runner.js` (Fragile), Jest installed but underutilized.
 
-### A. Strengths (Assets)
-*   **Core Logic:** A* Pathfinding and Logistics algorithms are solid.
-*   **Visual Identity:** "Ethereal Tech" design system is distinct and modern.
-*   **Foundational UX:** Skeleton loading and keyboard navigation are partially implemented.
+### 1.3 Threat Assessment (Gap Analysis)
+| Severity | Threat Vector | Description |
+| :--- | :--- | :--- |
+| **CRITICAL** | **Architecture** | `app.js` (47KB) is a "God Object" managing UI, Map, and Logic simultaneously. Zero separation of concerns. |
+| **CRITICAL** | **Maintainability** | `index.html` contains ~700 lines of embedded CSS. Updates require surgery on the document root. |
+| **HIGH** | **Security** | No Content Security Policy (CSP). Potential XSS vectors via `innerHTML` usage in `app.js`. |
+| **HIGH** | **Reliability** | Testing infrastructure relies on file-system hacks. No automated CI/CD pipeline. |
+| **MEDIUM** | **Performance** | No build step. Assets load synchronously. Large initial payload. |
+| **MEDIUM** | **UX/A11y** | Accessibility is manual and incomplete. Focus trapping is custom and potentially brittle. |
 
-### B. Critical Weaknesses (Threats)
-1.  **Fragile Architecture:** `app.js` is a 700+ line "God Object".
-2.  **Test Instability:** Testing relies on file-system hacks (`test_runner.js`).
-3.  **Security Gaps:** No Content Security Policy (CSP), `innerHTML` usage.
-4.  **Global Pollution:** Core classes attach to `window`, risking collisions.
-5.  **Performance:** Large asset loading on main thread; no bundle optimization.
+---
 
-## 3. BATTLE PLAN (PHASES)
+## 2. MISSION
 
-### PHASE 1: FORTIFICATION (Immediate Priority)
-*Objective: Stabilize the foundation and enable reliable testing.*
+**Objective:** Execute a comprehensive transformation of the codebase to achieve **Tier-1 Production Readiness**.
 
-1.  **Universal Module Definition (UMD):** Refactor `LogisticsCore.js`, `StrategicPathfinder.js`, and `MissionSimulator.js` to support both Node.js (CommonJS) and Browser environments natively.
-2.  **Test Infrastructure Repair:** Rewrite `test_runner.js` to eliminate temporary file creation hacks. Ensure 100% pass rate.
-3.  **Linting & Style:** Configure `eslint` and `prettier` to enforce zero-tolerance for code smells (e.g., unused vars, implicit globals).
+**Success Criteria:**
+1.  **Zero Critical Defects:** 100% Test Coverage on core logic.
+2.  **Operational Efficiency:** <1s First Contentful Paint (FCP), 60fps UI/Map interactions.
+3.  **Security Hardening:** Strict CSP implementation, Zero XSS vulnerabilities.
+4.  **User Experience:** WCAG 2.1 AA Compliance, seamless mobile/desktop responsiveness.
+5.  **Maintainability:** Modular architecture (ESM), standard build pipeline (Vite/Webpack).
 
-### PHASE 2: DECOUPLING (Short Term)
-*Objective: Break the monolith.*
+---
 
-1.  **Extract Data:** Move the `locations` array from `app.js` to `data/locations.js`.
-2.  **Modularize UI:** Break `app.js` into `UIManager`, `MapManager`, and `EventManager`.
-3.  **Dependency Management:** Ensure all 3rd party scripts (Leaflet) are managed via `package.json` or have strict SRI integrity checks in HTML.
+## 3. EXECUTION (THE PLAN)
 
-### PHASE 3: UX ELEVATION (Medium Term)
-*Objective: Reduce friction and enhance engagement.*
+The operation will be conducted in four distinct phases.
 
-1.  **Performance Tuning:** Implement `IntersectionObserver` for lazy-loading off-screen assets.
-2.  **Accessibility (A11y) Hardening:**
-    *   Ensure all interactive elements have `aria-labels`.
-    *   Implement "Skip to Content".
-    *   Verify focus management for all modals.
-3.  **Progressive Web App (PWA):** Add `manifest.json` and Service Worker for offline capability (critical for field operations).
+### PHASE 1: STABILIZATION & FORTIFICATION (Immediate Priority)
+*Focus: Secure the perimeter. Ensure the system is testable and stable before major surgery.*
 
-### PHASE 4: SECURITY HARDENING (Long Term)
-*Objective: Lock down the application.*
+1.  **Test Infrastructure Overhaul:**
+    *   Deprecate `test_runner.js`.
+    *   Configure Jest to natively handle UMD/CommonJS modules.
+    *   Establish a baseline "Green" test suite.
+2.  **Linting & Standardization:**
+    *   Enforce `ESLint` and `Prettier` rules.
+    *   Eliminate implicit globals and unused variables.
+3.  **Directory Restructuring:**
+    *   Create `src/`, `tests/`, `public/` hierarchy.
+    *   Move assets to appropriate silos.
 
-1.  **Content Security Policy (CSP):** Implement strict CSP headers/meta tags to prevent XSS.
-2.  **Input Sanitization:** Replace all `innerHTML` instances with `textContent` or `DOMPurify`.
-3.  **CI/CD Pipeline:** Setup GitHub Actions for automated testing and linting on push.
+### PHASE 2: DECOUPLING & REFACTORING (Short Term)
+*Focus: Break the monolith. Isolate systems for independent operation.*
 
-## 4. IMMEDIATE ACTION ITEMS
+1.  **CSS Extraction:**
+    *   Migrate embedded styles from `index.html` to `src/css/main.css`, `src/css/components/`.
+    *   Implement CSS Variables for "Ethereal Tech" design system.
+2.  **Logic Separation:**
+    *   Decompose `app.js` into focused modules:
+        *   `UIManager.js`: DOM manipulation.
+        *   `MapController.js`: Leaflet integration.
+        *   `AppCore.js`: State management.
+    *   Externalize data (`locations` array) to `src/data/locations.json`.
+3.  **Module Standardization:**
+    *   Convert UMD modules to standard ES Modules (ESM) for browser/bundler compatibility.
 
-The following tasks are authorized for immediate execution by the agent:
+### PHASE 3: SECURITY & PERFORMANCE HARDENING (Medium Term)
+*Focus: Lock down the system and optimize for speed.*
 
-- [ ] **Refactor `LogisticsCore.js` to Universal Module.**
-- [ ] **Refactor `StrategicPathfinder.js` to Universal Module.**
-- [ ] **Fix `test_runner.js`.**
-- [ ] **Verify Test Suite Integrity.**
+1.  **Security Protocol:**
+    *   Implement strict **Content Security Policy (CSP)**.
+    *   Audit and sanitize all DOM insertions (`textContent` > `innerHTML`).
+    *   dependency audit (`npm audit`).
+2.  **Build Pipeline:**
+    *   Introduce a build tool (e.g., Vite) for minification, bundling, and asset optimization.
+    *   Implement image optimization (WebP conversion).
+3.  **Performance Tuning:**
+    *   Lazy-load off-screen images (`IntersectionObserver`).
+    *   Debounce high-frequency map events.
 
-## 5. ROE (Rules of Engagement)
+### PHASE 4: UX ELEVATION & COMPLIANCE (Long Term)
+*Focus: Enhance the operator experience.*
 
-*   **Zero Regression:** Existing functionality must remain intact.
-*   **Test First:** Verify changes with tests immediately.
-*   **User Centric:** Every code change must consider the operator's experience.
+1.  **Accessibility (A11y) Audit:**
+    *   Ensure full keyboard navigability (Focus Rings, Tab Order).
+    *   ARIA role verification for all interactive custom controls.
+    *   Screen reader compatibility check.
+2.  **Progressive Web App (PWA):**
+    *   Generate `manifest.json`.
+    *   Implement Service Worker for offline map caching (Mission Critical for remote ops).
+3.  **Mobile Optimization:**
+    *   Refine touch targets (>44px).
+    *   Optimize "Bottom Sheet" interactions on mobile devices.
 
-**END OF BRIEFING**
+---
+
+## 4. LOGISTICS & SUPPORT
+
+### 4.1 Tooling
+*   **Version Control:** Git (Branching Strategy: Feature Branches > Main).
+*   **CI/CD:** GitHub Actions (Lint, Test, Build on Push).
+*   **Testing:** Jest (Unit), Playwright (E2E/Visual).
+
+### 4.2 Documentation
+*   Maintain `AGENTS.md` (if created) for AI-specific context.
+*   Generate JSDoc for all core logic modules.
+
+---
+
+## 5. IMMEDIATE ACTION ITEMS (Tactical Queue)
+
+Authorized agents are directed to execute the following tasks immediately:
+
+- [ ] **[P1] Initialize Standard Directory Structure.**
+- [ ] **[P1] Configure Jest for Robust Testing.**
+- [ ] **[P1] Extract CSS from `index.html`.**
+- [ ] **[P2] Modularize `app.js`.**
+
+---
+
+**COMMANDER'S INTENT:**
+We do not ship broken code. We do not compromise on security. We deliver a tool that works when the network is down and the pressure is up. Execute with precision.
+
+**END OF REPORT**
