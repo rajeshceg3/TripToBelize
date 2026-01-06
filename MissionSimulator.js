@@ -54,6 +54,35 @@
             this.pathfinder = pathfinder;
         }
 
+        /**
+         * Returns the remaining path points (coordinates) from current position.
+         */
+        getRemainingPath() {
+            if (!this.path || this.state.currentPathIndex >= this.path.length) return [];
+            return this.path.slice(this.state.currentPathIndex);
+        }
+
+        /**
+         * Returns the remaining route targets (Location objects) from current position.
+         */
+        getRemainingRouteTargets() {
+            if (!this.route || this.state.currentRouteIndex >= this.route.length) return [];
+            return this.route.slice(this.state.currentRouteIndex);
+        }
+
+        /**
+         * Updates the current path dynamically (e.g. for rerouting).
+         * @param {Array} newPath - Array of coordinates
+         */
+        updatePath(newPath) {
+            this.path = newPath;
+            this.state.currentPathIndex = 0; // Reset index for new path
+            this.state.progressOnLeg = 0;
+            this.onEvent("Course Correction Applied.", "warning");
+            this.removeVisuals(); // Refresh visuals if needed (mainly path line, but sim handles marker)
+            this.createVisuals(); // Ensure marker is on top
+        }
+
         start(locations) {
             if (!locations || locations.length < 2) {
                 console.error("MissionSimulator: Need at least 2 locations");

@@ -17,8 +17,8 @@
 </head>
 <body>
     <!-- Background Elements -->
-    <canvas id="constellation-canvas"></canvas>
-    <div id="map"></div>
+    <canvas id="constellation-canvas" role="img" aria-label="Constellation background animation"></canvas>
+    <div id="map" role="application" aria-label="Interactive Map of Belize"></div>
 
     <!-- Top UI Layer -->
     <div id="top-bar">
@@ -115,7 +115,7 @@
                     <div class="bar-track"><div id="bar-fatigue" class="bar-fill" style="background: var(--danger-red); width: 0%;"></div></div>
                 </div>
             </div>
-            <div id="mc-log-container" class="log-container"></div>
+            <div id="mc-log-container" class="log-container" aria-live="polite" role="log"></div>
         </div>
         <div style="padding: 16px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px;">
             <button id="btn-mc-pause" class="btn-action" style="width: auto; padding: 8px 20px; font-size: 0.8rem;">Pause</button>
@@ -185,6 +185,8 @@
     <script src="TacticalOverlay.js"></script>
     <script src="expedition.js"></script>
     <script src="MissionSimulator.js"></script>
+    <script src="js/modules/TelemetryStream.js"></script>
+    <script src="js/modules/Overwatch.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

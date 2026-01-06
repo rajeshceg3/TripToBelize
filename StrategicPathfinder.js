@@ -55,6 +55,14 @@
         }
 
         /**
+         * Dynamically adds a new risk zone to the grid.
+         * @param {Object} zone - { coords: [lat, lng], radius: m, risk: 1-10 }
+         */
+        addRiskZone(zone) {
+            this.riskZones.push(zone);
+        }
+
+        /**
          * Calculates the movement cost for a specific node.
          * @param {number} lat
          * @param {number} lng
