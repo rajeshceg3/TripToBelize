@@ -68,6 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let tacticalOverlay;
     let missionSimulator;
     let strategicPathfinder;
+    let telemetryStream;
+    let overwatch;
 
     // Initialize Expedition Manager
     const expeditionManager = new ExpeditionManager();
@@ -305,6 +307,39 @@ document.addEventListener('DOMContentLoaded', () => {
         // Inject Pathfinder
         missionSimulator.setPathfinder(strategicPathfinder);
 
+        // --- OVERWATCH & TELEMETRY INTEGRATION ---
+        telemetryStream = new TelemetryStream();
+        overwatch = new Overwatch(missionSimulator, strategicPathfinder, tacticalOverlay);
+
+        // Connect streams
+        telemetryStream.subscribe((intel) => {
+            overwatch.processIntel(intel);
+        });
+
+        // Listen for Overwatch Alerts
+        window.addEventListener('overwatch-alert', (e) => {
+            const threat = e.detail.threat;
+            const action = e.detail.action;
+
+            // Show alert in log
+            logMissionEvent(`ALERT: ${threat.message} (${threat.severity})`, 'critical');
+
+            if (action === 'REROUTE_REQUIRED') {
+                // Auto-confirm for this prototype, or show a modal
+                // Ideally, we pause and ask user.
+                const confirmed = confirm(`TACTICAL ALERT: ${threat.message} detected on route. Initiate evasive maneuvers?`);
+                if (confirmed) {
+                    overwatch.executeReroute();
+                    // Resume automatically or wait?
+                    // overwatch.executeReroute leaves it paused.
+                    setTimeout(() => {
+                         missionSimulator.pause(); // Toggle back to running
+                    }, 1000);
+                }
+            }
+        });
+        // -----------------------------------------
+
         btnSimulateMission.addEventListener('click', () => {
             const list = expeditionManager.getExpedition();
             if (list.length < 2) {
@@ -322,6 +357,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Start
             missionSimulator.start(list);
+
+            // Activate Overwatch and Telemetry
+            overwatch.engage();
+            telemetryStream.connect();
 
             // Auto-enable tactical overlay
             if (!tacticalOverlay.isVisible) {
@@ -382,6 +421,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleSimulationComplete(success) {
         btnMcPause.textContent = "Pause"; // Reset
+
+        // Deactivate Overwatch
+        if (overwatch) overwatch.disengage();
+        if (telemetryStream) telemetryStream.disconnect();
+
         setTimeout(() => {
              if (confirm(success ? "Mission Complete. Return to planning?" : "Mission Failed. Return to planning?")) {
                  missionControlPanel.classList.remove('visible');
@@ -761,51 +805,101 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showArchiveDetails(scenario) {
         const a = scenario.analysis;
-        archivesDetails.innerHTML = `
-            <h3 style="font-family: var(--font-display); color: var(--glow-cyan); font-size: 1.5rem; margin-bottom: 5px;">${scenario.name}</h3>
-            <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-bottom: 24px;">UUID: ${scenario.id.substring(0,8)}...</div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; margin-bottom: 24px;">
-                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
-                    <span style="display:block; font-size:0.7rem; color:var(--text-tertiary);">DURATION</span>
-                    <span style="font-size:1.2rem; font-family:var(--font-display);">${Math.floor(a.durationHours)}h ${Math.round((a.durationHours%1)*60)}m</span>
-                </div>
-                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
-                    <span style="display:block; font-size:0.7rem; color:var(--text-tertiary);">RISK SCORE</span>
-                    <span style="font-size:1.2rem; font-family:var(--font-display); color:${a.riskColor};">${a.riskScore}/100</span>
-                </div>
-            </div>
+        // Securely build the DOM instead of using innerHTML with user input
+        archivesDetails.textContent = ''; // Clear existing
 
-            <div style="width: 100%; text-align: left; margin-bottom: 24px;">
-                <span style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px; display:block;">PREDICTED RESOURCE DRAIN</span>
-                <div style="margin-bottom: 8px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;"><span>Supplies</span><span>${a.predictedSupplies}%</span></div>
-                    <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:99px;"><div style="width:${Math.min(a.predictedSupplies, 100)}%; background:var(--glow-cyan); height:100%;"></div></div>
-                </div>
-                <div style="margin-bottom: 8px;">
-                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;"><span>Fatigue</span><span>${a.predictedFatigue}%</span></div>
-                    <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:99px;"><div style="width:${Math.min(a.predictedFatigue, 100)}%; background:var(--warning-gold); height:100%;"></div></div>
-                </div>
-            </div>
+        const title = document.createElement('h3');
+        title.style.cssText = "font-family: var(--font-display); color: var(--glow-cyan); font-size: 1.5rem; margin-bottom: 5px;";
+        title.textContent = scenario.name;
 
-            <div style="display: flex; gap: 12px; width: 100%;">
-                <button id="btn-load-scenario" class="btn-action">Load & Deploy</button>
-                <button id="btn-delete-scenario" class="btn-action secondary" style="border: 1px solid var(--danger-red); color: var(--danger-red);">Delete</button>
-            </div>
-        `;
+        const uuid = document.createElement('div');
+        uuid.style.cssText = "font-size: 0.8rem; color: var(--text-tertiary); margin-bottom: 24px;";
+        uuid.textContent = `UUID: ${scenario.id.substring(0,8)}...`;
 
-        document.getElementById('btn-load-scenario').addEventListener('click', () => {
+        const grid = document.createElement('div');
+        grid.style.cssText = "display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; margin-bottom: 24px;";
+
+        const createCard = (label, val, color = null) => {
+            const card = document.createElement('div');
+            card.style.cssText = "background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;";
+            const l = document.createElement('span');
+            l.style.cssText = "display:block; font-size:0.7rem; color:var(--text-tertiary);";
+            l.textContent = label;
+            const v = document.createElement('span');
+            v.style.cssText = `font-size:1.2rem; font-family:var(--font-display);${color ? ' color:'+color : ''}`;
+            v.textContent = val;
+            card.appendChild(l);
+            card.appendChild(v);
+            return card;
+        };
+
+        grid.appendChild(createCard("DURATION", `${Math.floor(a.durationHours)}h ${Math.round((a.durationHours%1)*60)}m`));
+        grid.appendChild(createCard("RISK SCORE", `${a.riskScore}/100`, a.riskColor));
+
+        const metrics = document.createElement('div');
+        metrics.style.cssText = "width: 100%; text-align: left; margin-bottom: 24px;";
+
+        const metricTitle = document.createElement('span');
+        metricTitle.style.cssText = "font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px; display:block;";
+        metricTitle.textContent = "PREDICTED RESOURCE DRAIN";
+        metrics.appendChild(metricTitle);
+
+        const createBar = (label, val, color) => {
+            const wrap = document.createElement('div');
+            wrap.style.marginBottom = "8px";
+
+            const meta = document.createElement('div');
+            meta.style.cssText = "display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;";
+            const l = document.createElement('span'); l.textContent = label;
+            const v = document.createElement('span'); v.textContent = `${val}%`;
+            meta.appendChild(l); meta.appendChild(v);
+
+            const track = document.createElement('div');
+            track.style.cssText = "height:4px; background:rgba(255,255,255,0.1); border-radius:99px;";
+            const fill = document.createElement('div');
+            fill.style.cssText = `width:${Math.min(val, 100)}%; background:${color}; height:100%;`;
+            track.appendChild(fill);
+
+            wrap.appendChild(meta);
+            wrap.appendChild(track);
+            return wrap;
+        };
+
+        metrics.appendChild(createBar("Supplies", a.predictedSupplies, "var(--glow-cyan)"));
+        metrics.appendChild(createBar("Fatigue", a.predictedFatigue, "var(--warning-gold)"));
+
+        const btnGroup = document.createElement('div');
+        btnGroup.style.cssText = "display: flex; gap: 12px; width: 100%;";
+
+        const loadBtn = document.createElement('button');
+        loadBtn.className = "btn-action";
+        loadBtn.textContent = "Load & Deploy";
+        loadBtn.addEventListener('click', () => {
             loadScenarioIntoExpedition(scenario);
             archivesModal.classList.remove('visible');
             archivesModal.setAttribute('aria-hidden', 'true');
         });
 
-        document.getElementById('btn-delete-scenario').addEventListener('click', () => {
+        const delBtn = document.createElement('button');
+        delBtn.className = "btn-action secondary";
+        delBtn.style.cssText = "border: 1px solid var(--danger-red); color: var(--danger-red);";
+        delBtn.textContent = "Delete";
+        delBtn.addEventListener('click', () => {
             if(confirm('Confirm deletion of tactical record?')) {
                 decisionSupport.deleteScenario(scenario.id);
-                openArchives(); // Refresh
+                openArchives();
             }
         });
+
+        btnGroup.appendChild(loadBtn);
+        btnGroup.appendChild(delBtn);
+
+        archivesDetails.appendChild(title);
+        archivesDetails.appendChild(uuid);
+        archivesDetails.appendChild(grid);
+        archivesDetails.appendChild(metrics);
+        archivesDetails.appendChild(btnGroup);
     }
 
     function loadScenarioIntoExpedition(scenario) {
