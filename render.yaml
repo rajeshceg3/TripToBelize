@@ -2,7 +2,7 @@ services:
   - type: web
     name: trip-to-belize
     env: static
-    staticPublishPath: ./
-    buildCommand: null
+    staticPublishPath: build
+    buildCommand: npm run build
     plan: free
     autoDeploy: false
