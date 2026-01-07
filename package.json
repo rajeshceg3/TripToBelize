@@ -4,7 +4,7 @@
   "description": "Tactical Mission Planner for Belize Expeditions",
   "scripts": {
     "test": "node test_runner.js",
-    "build": "echo 'No build step required for static deployment.'",
+    "build": "bash build.sh",
     "lint": "echo 'ESLint not installed in this environment. Manual check required.'",
     "format": "echo 'Prettier not installed in this environment. Manual check required.'"
   },
