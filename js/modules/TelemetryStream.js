@@ -51,7 +51,7 @@
         connect() {
             if (this.active) return;
             this.active = true;
-            console.log("[Telemetry] Link Established. Encryption: AES-256.");
+            // console.log("[Telemetry] Link Established. Encryption: AES-256.");
 
             // Randomly trigger events every 10-30 seconds
             this._scheduleNextEvent();
@@ -63,7 +63,7 @@
         disconnect() {
             this.active = false;
             if (this.intervalId) clearTimeout(this.intervalId);
-            console.log("[Telemetry] Link Terminated.");
+            // console.log("[Telemetry] Link Terminated.");
         }
 
         _scheduleNextEvent() {

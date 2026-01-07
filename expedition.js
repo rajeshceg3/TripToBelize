@@ -11,7 +11,7 @@ class ExpeditionManager {
             const stored = localStorage.getItem(this.storageKey);
             if (stored) {
                 this.selectedLocations = JSON.parse(stored);
-                console.log("ExpeditionManager: Loaded", this.selectedLocations.length, "locations");
+                // console.log("ExpeditionManager: Loaded", this.selectedLocations.length, "locations");
             }
         } catch (e) {
             console.error("ExpeditionManager: Failed to load", e);
@@ -22,7 +22,7 @@ class ExpeditionManager {
     // Save expedition to local storage
     save() {
         try {
-            console.log("ExpeditionManager: Saving", this.selectedLocations.length, "locations");
+            // console.log("ExpeditionManager: Saving", this.selectedLocations.length, "locations");
             localStorage.setItem(this.storageKey, JSON.stringify(this.selectedLocations));
             // Dispatch a custom event so other components can react
             window.dispatchEvent(new CustomEvent('expeditionUpdated', {
@@ -35,7 +35,7 @@ class ExpeditionManager {
 
     // Add a location to the expedition
     addLocation(location) {
-        console.log("ExpeditionManager: Adding", location.name);
+        // console.log("ExpeditionManager: Adding", location.name);
         // Prevent duplicates
         if (!this.selectedLocations.some(l => l.name === location.name)) {
             this.selectedLocations.push(location);
@@ -47,7 +47,7 @@ class ExpeditionManager {
 
     // Remove a location from the expedition
     removeLocation(locationName) {
-        console.log("ExpeditionManager: Removing", locationName);
+        // console.log("ExpeditionManager: Removing", locationName);
         this.selectedLocations = this.selectedLocations.filter(l => l.name !== locationName);
         this.save();
     }
@@ -98,7 +98,7 @@ class ExpeditionManager {
 
     // Analyze the expedition composition
     analyzeComposition() {
-        console.log("ExpeditionManager: Analyzing composition for", this.selectedLocations.length, "items");
+        // console.log("ExpeditionManager: Analyzing composition for", this.selectedLocations.length, "items");
         if (this.selectedLocations.length === 0) return null;
 
         const counts = {};
@@ -127,7 +127,7 @@ class ExpeditionManager {
 
     // Clear the expedition
     clear() {
-        console.log("ExpeditionManager: Clearing");
+        // console.log("ExpeditionManager: Clearing");
         this.selectedLocations = [];
         this.save();
     }

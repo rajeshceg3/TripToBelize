@@ -45,6 +45,7 @@
 
             this.route = []; // Array of Location objects
             this.path = []; // High-res path including A* waypoints (Array of Coords)
+            this.routeIndices = []; // Indices in this.path corresponding to this.route locations
             this.marker = null;
             this.sensorCircle = null;
             this.pathfinder = null; // Will be injected
@@ -90,22 +91,31 @@
             }
 
             this.route = locations;
+            this.routeIndices = [0]; // Start at index 0
 
             // Generate high-resolution path if pathfinder is available
             if (this.pathfinder) {
                  this.path = [];
+                 // First point is start
+                 this.path.push(locations[0].coords);
+
                  for(let i=0; i<locations.length-1; i++) {
                      const start = locations[i].coords;
                      const end = locations[i+1].coords;
                      const segmentPath = this.pathfinder.findPath(start, end);
-                     // Append segment, skipping first point if not first segment to avoid dups
-                     if(i > 0) segmentPath.shift();
+
+                     // Remove the first point of the segment as it duplicates the current last point
+                     segmentPath.shift();
+
                      this.path = this.path.concat(segmentPath);
+                     // The last point added corresponds to locations[i+1]
+                     this.routeIndices.push(this.path.length - 1);
                  }
                  this.onEvent("Strategic Route Optimized. Avoiding High-Risk Zones.", "info");
             } else {
                 // Fallback to straight lines (just the key locations)
                 this.path = locations.map(l => l.coords);
+                this.routeIndices = locations.map((_, i) => i);
             }
 
             this.state = {
@@ -216,19 +226,17 @@
                     return false; // Done
                 }
 
-                // --- CRITICAL FIX: Update Route Index based on proximity to key locations ---
-                const currentPos = this.path[this.state.currentPathIndex];
+                // --- FIXED: Update Route Index based on path traversal ---
+                // We check if we have passed the path index corresponding to the next target
+                const nextTargetIndex = this.state.currentRouteIndex + 1;
 
-                // Check if we are close to the NEXT key location in the route
-                // We start checking from currentRouteIndex + 1
-                const nextTargetLoc = this.route[this.state.currentRouteIndex + 1];
+                if (nextTargetIndex < this.routeIndices.length) {
+                    const targetPathIndex = this.routeIndices[nextTargetIndex];
 
-                if (nextTargetLoc) {
-                    const distToTarget = this.getDist(currentPos, nextTargetLoc.coords);
-                    // If within 100 meters (0.1km), consider it reached/passed
-                    if (distToTarget < 0.1) {
-                         this.onEvent(`Reached Objective: ${nextTargetLoc.name}`, "success");
-                         this.state.currentRouteIndex++;
+                    if (this.state.currentPathIndex >= targetPathIndex) {
+                        const nextTargetLoc = this.route[nextTargetIndex];
+                        this.onEvent(`Reached Objective: ${nextTargetLoc.name}`, "success");
+                        this.state.currentRouteIndex++;
                     }
                 }
 

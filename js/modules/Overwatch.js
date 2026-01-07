@@ -30,12 +30,12 @@
          */
         engage() {
             this.isEnabled = true;
-            console.log("[Overwatch] System Online. Monitoring active frequencies.");
+            // console.log("[Overwatch] System Online. Monitoring active frequencies.");
         }
 
         disengage() {
             this.isEnabled = false;
-            console.log("[Overwatch] System Standby.");
+            // console.log("[Overwatch] System Standby.");
         }
 
         /**
@@ -46,7 +46,7 @@
             if (!this.isEnabled) return;
             if (this.simulator.state.status !== 'RUNNING') return;
 
-            console.log(`[Overwatch] Analyzing Signal: ${intel.message}`);
+            // console.log(`[Overwatch] Analyzing Signal: ${intel.message}`);
 
             // 1. Register Threat
             this.activeThreats.push(intel);
@@ -93,7 +93,7 @@
         }
 
         _initiateProtocol(threat) {
-            console.warn("[Overwatch] THREAT DETECTED ON ROUTE. INITIATING PROTOCOL.");
+            // console.warn("[Overwatch] THREAT DETECTED ON ROUTE. INITIATING PROTOCOL.");
 
             // 1. Pause Simulation
             this.simulator.pause();
@@ -159,7 +159,7 @@
             this.simulator.updatePath(newPath);
             this.simulator.pause(); // Resume happens manually or here? Let's leave it paused for user to resume.
 
-            console.log("[Overwatch] New trajectory locked.");
+            // console.log("[Overwatch] New trajectory locked.");
             return true;
         }
 

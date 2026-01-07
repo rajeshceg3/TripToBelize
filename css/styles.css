@@ -77,7 +77,8 @@
 
         /* Tactical Mode: High Contrast, Green tint */
         #map.tactical-mode-active .leaflet-tile-pane {
-            filter: grayscale(1) brightness(0.3) sepia(1) hue-rotate(100deg) saturate(2) contrast(1.5);
+            /* Adjusted for better legibility - less saturation, slightly brighter */
+            filter: grayscale(1) brightness(0.4) sepia(0.8) hue-rotate(90deg) saturate(1.5) contrast(1.2);
         }
 
         /* Markers */
@@ -505,3 +506,25 @@
             .mc-body { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
             .log-container { height: 80px; }
         }
+
+/* Simulate Button */
+.simulate-btn {
+    background: rgba(255, 215, 0, 0.1); /* Low opacity gold background */
+    border: 1px solid var(--warning-gold);
+    color: var(--warning-gold);
+    transition: all 0.3s ease;
+}
+
+.simulate-btn:hover {
+    background: var(--warning-gold);
+    color: #000; /* High contrast on hover */
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+/* Ensure sufficient contrast for the default state */
+/* If the background is dark (glass-panel), gold text is usually OK,
+   but let's beef it up. */
+.simulate-btn {
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+    font-weight: 700;
+}
