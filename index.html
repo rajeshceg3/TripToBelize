@@ -3,17 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://unpkg.com https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://unpkg.com https://*.basemaps.cartocdn.com https://images.unsplash.com; connect-src 'self';">
+
     <title>Belize: An Elemental Journey</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
 
     <!-- Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Scripts (Deferred for Performance) -->
+    <script src="js/data.js" defer></script>
+    <script src="constellations.js" defer></script>
+    <script src="LogisticsCore.js" defer></script>
+    <script src="DecisionSupport.js" defer></script>
+    <script src="StrategicPathfinder.js" defer></script>
+    <script src="TacticalOverlay.js" defer></script>
+    <script src="expedition.js" defer></script>
+    <script src="MissionSimulator.js" defer></script>
+    <script src="js/modules/TelemetryStream.js" defer></script>
+    <script src="js/modules/Overwatch.js" defer></script>
+    <script src="app.js" defer></script>
 </head>
 <body>
     <!-- Background Elements -->
@@ -28,22 +44,22 @@
             <button class="filter-btn" data-filter="nature" aria-pressed="false">Nature</button>
             <button class="filter-btn" data-filter="marine" aria-pressed="false">Marine</button>
         </div>
-        <div id="tactical-toggle" class="glass-panel" role="button" tabindex="0" aria-pressed="false" aria-label="Toggle Tactical Mode">
+        <button id="tactical-toggle" class="glass-panel btn-reset" aria-pressed="false" aria-label="Toggle Tactical Mode">
             <div class="toggle-icon"></div>
             <span>Tactical Mode</span>
-        </div>
+        </button>
     </div>
 
     <!-- Info Panel (Details) -->
-    <div id="info-panel" class="glass-panel" role="region" aria-label="Location Information">
+    <div id="info-panel" class="glass-panel" role="region" aria-label="Location Information" tabindex="-1">
         <div class="panel-handle"></div> <!-- Visible only on mobile/css hook -->
         <div class="panel-image-container">
             <img id="panel-image" src="" alt="Location View">
             <div class="panel-image-overlay"></div>
         </div>
-        <div id="close-panel" role="button" tabindex="0" aria-label="Close Panel">
+        <button id="close-panel" class="btn-reset" aria-label="Close Panel">
             <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-        </div>
+        </button>
         <div id="panel-content">
             <div id="panel-type" class="tag">Marine</div>
             <h2 id="panel-title">Great Blue Hole</h2>
@@ -175,18 +191,5 @@
         <div class="intro-sub">An Elemental Journey</div>
         <div class="intro-hint">Press Enter or Click to Begin</div>
     </div>
-
-    <!-- Scripts -->
-    <script src="js/data.js"></script>
-    <script src="constellations.js"></script>
-    <script src="LogisticsCore.js"></script>
-    <script src="DecisionSupport.js"></script>
-    <script src="StrategicPathfinder.js"></script>
-    <script src="TacticalOverlay.js"></script>
-    <script src="expedition.js"></script>
-    <script src="MissionSimulator.js"></script>
-    <script src="js/modules/TelemetryStream.js"></script>
-    <script src="js/modules/Overwatch.js"></script>
-    <script src="app.js"></script>
 </body>
 </html>
