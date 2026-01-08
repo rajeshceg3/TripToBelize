@@ -458,12 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const nameSpan = document.createElement('span');
             nameSpan.textContent = loc.name;
 
-            const removeBtn = document.createElement('span');
-            removeBtn.className = 'remove-btn';
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn btn-reset';
             removeBtn.title = 'Remove Target';
             removeBtn.textContent = '×';
-            removeBtn.setAttribute('role', 'button');
-            removeBtn.setAttribute('tabindex', '0');
             removeBtn.setAttribute('aria-label', `Remove ${loc.name}`);
 
             removeBtn.addEventListener('click', (e) => {
@@ -508,7 +506,12 @@ document.addEventListener('DOMContentLoaded', () => {
         gearContainer.innerHTML = '';
 
         if (required.length === 0) {
-            gearContainer.innerHTML = '<span style="font-size:0.7rem; color:#aaa; font-style:italic;">No special gear required.</span>';
+            const span = document.createElement('span');
+            span.style.fontSize = '0.7rem';
+            span.style.color = '#aaa';
+            span.style.fontStyle = 'italic';
+            span.textContent = 'No special gear required.';
+            gearContainer.appendChild(span);
             return;
         }
 

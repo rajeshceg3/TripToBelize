@@ -26,8 +26,8 @@
             --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
             --font-display: 'Space Grotesk', monospace;
             --text-primary: #e6f1f5;
-            --text-secondary: #94a3b8;
-            --text-tertiary: #64748b;
+            --text-secondary: #b0c4de;
+            --text-tertiary: #8fa0bc;
 
             /* Motion */
             --ease-fluid: cubic-bezier(0.2, 0.0, 0.2, 1.0); /* Fluid ease-out */
