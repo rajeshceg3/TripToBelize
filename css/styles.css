@@ -509,22 +509,22 @@
 
 /* Simulate Button */
 .simulate-btn {
-    background: rgba(255, 215, 0, 0.1); /* Low opacity gold background */
-    border: 1px solid var(--warning-gold);
+    background: rgba(255, 215, 0, 0.2); /* Increased opacity for better contrast */
+    border: 2px solid var(--warning-gold); /* Thicker border */
     color: var(--warning-gold);
     transition: all 0.3s ease;
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
+    font-weight: 700;
 }
 
 .simulate-btn:hover {
     background: var(--warning-gold);
     color: #000; /* High contrast on hover */
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    text-shadow: none;
 }
 
-/* Ensure sufficient contrast for the default state */
-/* If the background is dark (glass-panel), gold text is usually OK,
-   but let's beef it up. */
-.simulate-btn {
-    text-shadow: 0 0 5px rgba(0,0,0,0.8);
-    font-weight: 700;
+.simulate-btn:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 4px;
 }

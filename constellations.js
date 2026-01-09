@@ -30,6 +30,23 @@ class Constellation {
             });
         }
         window.addEventListener('resize', () => this.resize());
+
+        // Performance: Pause when not visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.paused = true;
+            } else {
+                this.paused = false;
+                this.animate();
+            }
+        });
+
+        // Accessibility: Check for reduced motion
+        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        this.reducedMotion = mediaQuery.matches;
+        mediaQuery.addEventListener('change', () => {
+             this.reducedMotion = mediaQuery.matches;
+        });
     }
 
     resize() {
@@ -63,19 +80,24 @@ class Constellation {
 
         if (relatedLocations.length === 0) return;
 
-        const activePoint = this.map.latLngToContainerPoint(this.activeLocation.coords);
+        // Try catch for projection errors if map is not ready
+        try {
+            const activePoint = this.map.latLngToContainerPoint(this.activeLocation.coords);
 
-        this.ctx.strokeStyle = "rgba(127, 255, 212, 0.3)";
-        this.ctx.lineWidth = 1;
-        this.ctx.beginPath();
+            this.ctx.strokeStyle = "rgba(127, 255, 212, 0.3)";
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
 
-        relatedLocations.forEach(loc => {
-            const point = this.map.latLngToContainerPoint(loc.coords);
-            this.ctx.moveTo(activePoint.x, activePoint.y);
-            this.ctx.lineTo(point.x, point.y);
-        });
+            relatedLocations.forEach(loc => {
+                const point = this.map.latLngToContainerPoint(loc.coords);
+                this.ctx.moveTo(activePoint.x, activePoint.y);
+                this.ctx.lineTo(point.x, point.y);
+            });
 
-        this.ctx.stroke();
+            this.ctx.stroke();
+        } catch (e) {
+            // Map might be zooming or invalid state, skip frame
+        }
     }
 
     setActiveLocation(location) {
@@ -83,6 +105,9 @@ class Constellation {
     }
 
     update() {
+        // Skip update if reduced motion is on
+        if (this.reducedMotion) return;
+
         for (let i = 0; i < this.stars.length; i++) {
             let s = this.stars[i];
             s.x += s.vx / 4;
@@ -94,6 +119,8 @@ class Constellation {
     }
 
     animate() {
+        if (this.paused) return;
+
         this.draw();
         this.update();
         requestAnimationFrame(() => this.animate());
