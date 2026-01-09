@@ -71,6 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let telemetryStream;
     let overwatch;
 
+    // Architecture Hardening: Robustness Check
+    if (typeof Overwatch === 'undefined' || typeof TelemetryStream === 'undefined') {
+        console.error("CRITICAL: Tactical Modules (Overwatch/Telemetry) failed to initialize. UMD/Global scope mismatch detected.");
+        // We can add a user-facing toast here if desired, but for now we ensure it doesn't crash later.
+    }
+
     // Initialize Expedition Manager
     const expeditionManager = new ExpeditionManager();
     let routeLayer = null;
@@ -308,13 +314,18 @@ document.addEventListener('DOMContentLoaded', () => {
         missionSimulator.setPathfinder(strategicPathfinder);
 
         // --- OVERWATCH & TELEMETRY INTEGRATION ---
-        telemetryStream = new TelemetryStream();
-        overwatch = new Overwatch(missionSimulator, strategicPathfinder, tacticalOverlay);
+        // Robustness Check: Ensure modules are available
+        if (typeof TelemetryStream !== 'undefined' && typeof Overwatch !== 'undefined') {
+            telemetryStream = new TelemetryStream();
+            overwatch = new Overwatch(missionSimulator, strategicPathfinder, tacticalOverlay);
 
-        // Connect streams
-        telemetryStream.subscribe((intel) => {
-            overwatch.processIntel(intel);
-        });
+            // Connect streams
+            telemetryStream.subscribe((intel) => {
+                overwatch.processIntel(intel);
+            });
+        } else {
+            console.warn("Tactical systems offline due to missing dependencies.");
+        }
 
         // Listen for Overwatch Alerts
         window.addEventListener('overwatch-alert', (e) => {
@@ -359,11 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
             missionSimulator.start(list);
 
             // Activate Overwatch and Telemetry
-            overwatch.engage();
-            telemetryStream.connect();
+            if (overwatch) overwatch.engage();
+            if (telemetryStream) telemetryStream.connect();
 
             // Auto-enable tactical overlay
-            if (!tacticalOverlay.isVisible) {
+            if (tacticalOverlay && !tacticalOverlay.isVisible) {
                 tacticalOverlay.show();
                 tacticalToggle.classList.add('active');
             }
