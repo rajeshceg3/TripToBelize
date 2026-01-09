@@ -1,40 +1,50 @@
-name: CI/CD Pipeline
+name: Operation Ironclad CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   test:
-    name: Run Tests
+    name: Validation Pipeline
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Tests
-        run: npm test
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
 
-  deploy:
-    name: Trigger Deploy
-    needs: test
-    runs-on: ubuntu-latest
-    # Only run this job on the main branch
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Trigger Render Deploy Hook
-        # Only run if the secret is set
-        if: "${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}"
-        run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
-          echo "Deploy trigger sent to Render."
+      - name: Run Unit & Integration Tests (Jest)
+        run: npx jest tests/unit tests/integration --coverage
+
+      - name: Run E2E Tests (Playwright)
+        run: npx playwright test --config=verification/playwright.config.js
+
+      - name: Upload Test Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
