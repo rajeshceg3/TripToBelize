@@ -1,13 +1,5 @@
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /js/data.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /LogisticsCore.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /DecisionSupport.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /css/styles.css HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /StrategicPathfinder.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /constellations.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /TacticalOverlay.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /expedition.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /js/modules/TelemetryStream.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /js/modules/Overwatch.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /MissionSimulator.js HTTP/1.1" 200 -
-127.0.0.1 - - [09/Jan/2026 12:04:16] "GET /app.js HTTP/1.1" 200 -
+
+> trip-to-belize@1.0.0 start-server
+> node server.js
+
+Server running at http://localhost:8080/
