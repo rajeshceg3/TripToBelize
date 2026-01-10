@@ -509,7 +509,7 @@
 
 /* Simulate Button */
 .simulate-btn {
-    background: rgba(255, 215, 0, 0.2); /* Increased opacity for better contrast */
+    background: rgba(255, 215, 0, 0.4); /* Increased opacity for better contrast */
     border: 2px solid var(--warning-gold); /* Thicker border */
     color: var(--warning-gold);
     transition: all 0.3s ease;

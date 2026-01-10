@@ -77,6 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // We can add a user-facing toast here if desired, but for now we ensure it doesn't crash later.
     }
 
+    // SYSTEM INTEGRITY CHECK
+    if (typeof locations === 'undefined' || !Array.isArray(locations)) {
+        console.error("CRITICAL: Geospatial Data (locations) failed to load.");
+        alert("SYSTEM FAILURE: Geospatial Data Corrupted. Please refresh.");
+        return; // Halt execution
+    }
+
     // Initialize Expedition Manager
     const expeditionManager = new ExpeditionManager();
     let routeLayer = null;
@@ -354,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSimulateMission.addEventListener('click', () => {
             const list = expeditionManager.getExpedition();
             if (list.length < 2) {
-                alert("Need at least 2 targets to simulate a route.");
+                alert("MISSION ABORTED: Insufficient navigational data.\nMinimum 2 targets required to calculate trajectory.");
                 return;
             }
 
@@ -633,7 +640,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenerateBrief.addEventListener('click', () => {
         const list = expeditionManager.getExpedition();
         const analysis = expeditionManager.analyzeComposition();
-        if (!analysis) return;
+        if (!analysis) {
+             alert("DATA INSUFFICIENT: Select at least one target to generate intelligence brief.");
+             return;
+        }
 
         // Perform Advanced Logistics Analysis
         const eta = logisticsCore.calculateETA(list, analysis.totalDistance);
