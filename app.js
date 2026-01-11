@@ -979,6 +979,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const requestId = currentImageRequestId;
 
         // A brief pause allows the map to settle before the panel presentation begins.
+        // OPTIMIZATION: Reduced delay from 500ms to 200ms to improve perceived responsiveness
+        // while still allowing the map flyTo animation to initiate clearly.
         setTimeout(() => {
             // Check if this request is still valid
             if (requestId !== currentImageRequestId) return;
@@ -1027,12 +1029,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Accessibility: Move focus to the panel
             // We need to wait for the transition or force focus
+            // Using a shorter delay matched to CSS transitions if needed, or immediate.
             setTimeout(() => {
                 infoPanel.setAttribute('tabindex', '-1'); // Ensure focusable
                 infoPanel.focus();
-            }, 100);
+            }, 50);
 
-        }, 500);
+        }, 200);
     }
 
     function closeInfoPanel() {

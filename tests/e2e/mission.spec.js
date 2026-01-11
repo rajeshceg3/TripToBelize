@@ -47,13 +47,18 @@ test.describe('Mission Operation [E2E]', () => {
 
     // Click 1st visible marker
     if (count > 0) {
-        await visibleMarkers.first().click({ force: true });
+        // Remove force: true to ensure real user interaction is simulated
+        await visibleMarkers.first().click();
 
         const panel = page.locator('#info-panel');
+        await expect(panel).toBeVisible({ timeout: 5000 });
         await expect(panel).toHaveClass(/visible/);
 
         await addToExpedition();
-        await page.locator('#close-panel').click({ force: true });
+
+        const closeBtn = page.locator('#close-panel');
+        await expect(closeBtn).toBeVisible();
+        await closeBtn.click();
     }
 
     // Click 2nd visible marker
@@ -61,12 +66,17 @@ test.describe('Mission Operation [E2E]', () => {
          // Wait for panel to close
          const panel = page.locator('#info-panel');
          await expect(panel).not.toHaveClass(/visible/);
+         // Allow animation to complete (CSS transition 0.6s) to prevent click interception or state overlap
+         await page.waitForTimeout(700);
 
-         await visibleMarkers.nth(1).click({ force: true });
+         await visibleMarkers.nth(1).click();
+         await expect(panel).toBeVisible({ timeout: 5000 });
          await expect(panel).toHaveClass(/visible/);
 
          await addToExpedition();
-         await page.locator('#close-panel').click({ force: true });
+         const closeBtn = page.locator('#close-panel');
+         await expect(closeBtn).toBeVisible();
+         await closeBtn.click();
     } else {
         // Fallback
         await page.locator('button[data-filter="all"]').click();
@@ -75,11 +85,14 @@ test.describe('Mission Operation [E2E]', () => {
         const panel = page.locator('#info-panel');
         await expect(panel).not.toHaveClass(/visible/);
 
-        await page.locator('.leaflet-marker-icon').nth(2).click({ force: true });
+        await page.locator('.leaflet-marker-icon').nth(2).click();
+        await expect(panel).toBeVisible({ timeout: 5000 });
         await expect(panel).toHaveClass(/visible/);
 
         await addToExpedition();
-        await page.locator('#close-panel').click({ force: true });
+        const closeBtn = page.locator('#close-panel');
+        await expect(closeBtn).toBeVisible();
+        await closeBtn.click();
     }
 
     // Check HUD count
