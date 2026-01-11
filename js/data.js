@@ -1,7 +1,9 @@
 // The narrative begins here. Data is not just data; it is a collection of stories.
 // Images are summoned from the ether, ensuring the experience is light and immediate.
 // ENHANCEMENT: Operational metrics added for Tactical Logistics System.
-const locations = [
+
+// ARCHITECTURE FIX: Explicitly attach to global scope to prevent scope isolation issues.
+window.locations = [
     {
         name: "Great Blue Hole",
         type: "Marine Sinkhole",
@@ -183,3 +185,6 @@ const locations = [
         required_gear: ["swimwear", "boat_transport", "casual_attire"]
     }
 ];
+
+// Fallback for older patterns
+const locations = window.locations;
