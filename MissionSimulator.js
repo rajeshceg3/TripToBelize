@@ -324,7 +324,18 @@
 
         // Helpers
 
+        stop() {
+             this.state.status = 'IDLE';
+             if (this.timer) {
+                 clearTimeout(this.timer);
+                 this.timer = null;
+             }
+        }
+
         getDist(c1, c2) {
+            if (typeof Utils !== 'undefined') {
+                return Utils.getDist(c1, c2);
+            }
             const R = 6371;
             const dLat = (c2[0] - c1[0]) * Math.PI / 180;
             const dLon = (c2[1] - c1[1]) * Math.PI / 180;

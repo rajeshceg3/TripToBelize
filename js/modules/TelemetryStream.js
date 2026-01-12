@@ -62,7 +62,10 @@
          */
         disconnect() {
             this.active = false;
-            if (this.intervalId) clearTimeout(this.intervalId);
+            if (this.intervalId) {
+                clearTimeout(this.intervalId);
+                this.intervalId = null;
+            }
             // console.log("[Telemetry] Link Terminated.");
         }
 

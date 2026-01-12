@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // SYSTEM INTEGRITY CHECK
     if (typeof locations === 'undefined' || !Array.isArray(locations)) {
         console.error("CRITICAL: Geospatial Data (locations) failed to load.");
-        alert("SYSTEM FAILURE: Geospatial Data Corrupted. Please refresh.");
+        Utils.showToast("SYSTEM FAILURE: Geospatial Data Corrupted. Please refresh.", "critical");
         return; // Halt execution
     }
 
@@ -341,19 +341,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Show alert in log
             logMissionEvent(`ALERT: ${threat.message} (${threat.severity})`, 'critical');
+            Utils.showToast(`ALERT: ${threat.message}`, 'critical');
 
             if (action === 'REROUTE_REQUIRED') {
                 // Auto-confirm for this prototype, or show a modal
                 // Ideally, we pause and ask user.
-                const confirmed = confirm(`TACTICAL ALERT: ${threat.message} detected on route. Initiate evasive maneuvers?`);
-                if (confirmed) {
+                // REFACTOR: Replaced blocking confirm with auto-reroute + toast for flow
+                Utils.showToast("Initiating Evasive Maneuvers...", "warning");
+
+                setTimeout(() => {
                     overwatch.executeReroute();
                     // Resume automatically or wait?
                     // overwatch.executeReroute leaves it paused.
                     setTimeout(() => {
-                         missionSimulator.pause(); // Toggle back to running
+                            missionSimulator.pause(); // Toggle back to running
                     }, 1000);
-                }
+                }, 1500);
             }
         });
         // -----------------------------------------
@@ -361,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSimulateMission.addEventListener('click', () => {
             const list = expeditionManager.getExpedition();
             if (list.length < 2) {
-                alert("MISSION ABORTED: Insufficient navigational data.\nMinimum 2 targets required to calculate trajectory.");
+                Utils.showToast("MISSION ABORTED: Minimum 2 targets required.", "critical");
                 return;
             }
 
@@ -393,9 +396,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         btnMcAbort.addEventListener('click', () => {
-            if (confirm("Abort Mission?")) {
-                missionSimulator.abort();
-            }
+            // Replaced blocking confirm
+            missionSimulator.abort();
+            Utils.showToast("Mission Aborted by Command.", "warning");
         });
     }
 
@@ -445,13 +448,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (telemetryStream) telemetryStream.disconnect();
 
         setTimeout(() => {
-             if (confirm(success ? "Mission Complete. Return to planning?" : "Mission Failed. Return to planning?")) {
+             // Non-blocking transition
+             Utils.showToast(success ? "Mission Complete." : "Mission Failed.", success ? "success" : "critical");
+
+             setTimeout(() => {
                  missionControlPanel.classList.remove('visible');
                  expeditionHud.classList.add('visible');
-
-                 // Clean up sim visuals if not handled by abort/complete internally
-                 // (Simulator handles removing its markers)
-             }
+             }, 2000);
         }, 1000);
     }
 
@@ -628,9 +631,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle "Clear"
     btnClearExpedition.addEventListener('click', () => {
-        if(confirm('Abort current mission planning?')) {
-            expeditionManager.clear();
-        }
+        expeditionManager.clear();
+        Utils.showToast("Expedition Plan Cleared.", "info");
     });
 
     // Staging for current briefing data
@@ -641,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const list = expeditionManager.getExpedition();
         const analysis = expeditionManager.analyzeComposition();
         if (!analysis) {
-             alert("DATA INSUFFICIENT: Select at least one target to generate intelligence brief.");
+             Utils.showToast("DATA INSUFFICIENT: Select at least one target.", "warning");
              return;
         }
 
@@ -738,7 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
             currentBriefingData.metrics
         );
         if (saved) {
-            alert(`Scenario "${saved.name}" archived successfully.`);
+            Utils.showToast(`Scenario "${saved.name}" Archived.`, "success");
             closeBriefingModal();
         }
     });
@@ -941,7 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedGear = [...scenario.gear];
         updateExpeditionUI(); // This will re-render checkboxes based on selectedGear global
 
-        alert(`Mission Profile "${scenario.name}" Loaded.`);
+        Utils.showToast(`Mission Profile "${scenario.name}" Loaded.`, "success");
     }
 
     // --- EXPEDITION LOGIC END ---
@@ -951,9 +953,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleMarkerClick(marker, location) {
         // A fluid transition to the point of interest.
+        // CHECK: Reduced Motion
+        const animate = !Utils.prefersReducedMotion();
         map.flyTo(location.coords, 11, {
-            animate: true,
-            duration: 1.5
+            animate: animate,
+            duration: animate ? 1.5 : 0
         });
 
         // Manage the state of the beacons. Only one may be fully illuminated at a time.
@@ -1050,9 +1054,10 @@ document.addEventListener('DOMContentLoaded', () => {
             constellation.setActiveLocation(null);
         }
         // A gentle retreat, returning focus to the whole.
+        const animate = !Utils.prefersReducedMotion();
         map.flyTo([17.1899, -88.4976], 8, {
-            animate: true,
-            duration: 1.0
+            animate: animate,
+            duration: animate ? 1.0 : 0
         });
 
         // Accessibility: Return focus to marker

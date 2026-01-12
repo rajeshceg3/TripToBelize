@@ -200,6 +200,9 @@
 
         // Haversine formula
         getDist(c1, c2) {
+            if (typeof Utils !== 'undefined') {
+                return Utils.getDist(c1, c2);
+            }
             const R = 6371; // km
             const dLat = (c2[0] - c1[0]) * Math.PI / 180;
             const dLon = (c2[1] - c1[1]) * Math.PI / 180;

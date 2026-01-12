@@ -24,6 +24,7 @@ describe('MissionSimulator [Integration]', () => {
     });
 
     afterEach(() => {
+        if (simulator) simulator.stop(); // Ensure timers are cleared
         jest.clearAllMocks();
     });
 
