@@ -15,7 +15,8 @@
     }
 }(typeof self !== 'undefined' ? self : this, function() {
 
-    // Minimal Priority Queue for A*
+    // Optimized Binary Heap Priority Queue for A*
+    // Performance: O(log N) operations vs O(N log N) for array sort
     class PriorityQueue {
         constructor() {
             this.elements = [];
@@ -23,15 +24,64 @@
 
         enqueue(item, priority) {
             this.elements.push({ item, priority });
-            this.elements.sort((a, b) => a.priority - b.priority);
+            this.bubbleUp(this.elements.length - 1);
         }
 
         dequeue() {
-            return this.elements.shift().item;
+            if (this.isEmpty()) return null;
+            const min = this.elements[0];
+            const end = this.elements.pop();
+            if (this.elements.length > 0) {
+                this.elements[0] = end;
+                this.sinkDown(0);
+            }
+            return min.item;
         }
 
         isEmpty() {
             return this.elements.length === 0;
+        }
+
+        bubbleUp(n) {
+            const element = this.elements[n];
+            while (n > 0) {
+                const parentN = Math.floor((n + 1) / 2) - 1;
+                const parent = this.elements[parentN];
+                if (element.priority >= parent.priority) break;
+                this.elements[parentN] = element;
+                this.elements[n] = parent;
+                n = parentN;
+            }
+        }
+
+        sinkDown(n) {
+            const length = this.elements.length;
+            const element = this.elements[n];
+            while (true) {
+                let child2N = (n + 1) * 2;
+                let child1N = child2N - 1;
+                let swap = null;
+
+                if (child1N < length) {
+                    const child1 = this.elements[child1N];
+                    if (child1.priority < element.priority) {
+                        swap = child1N;
+                    }
+                }
+
+                if (child2N < length) {
+                    const child2 = this.elements[child2N];
+                    const child1 = this.elements[child1N];
+                    if (child2.priority < (swap === null ? element.priority : child1.priority)) {
+                        swap = child2N;
+                    }
+                }
+
+                if (swap === null) break;
+                this.elements[n] = this.elements[swap];
+                this.elements[swap] = element;
+                n = swap;
+            }
         }
     }
 
@@ -115,7 +165,7 @@
             const visited = new Set();
 
             let iters = 0;
-            const maxIters = 2000; // Safety break
+            const maxIters = 5000; // Increased safety break due to better performance
 
             while (!openSet.isEmpty()) {
                 iters++;
@@ -151,8 +201,6 @@
                         gScore[neighborKey] = tentativeG;
                         fScore[neighborKey] = tentativeG + this.heuristic(neighbor, end);
 
-                        // Priority Queue update is tricky without a specialized data structure,
-                        // so we just push again (lazy deletion).
                         openSet.enqueue(neighbor, fScore[neighborKey]);
                     }
                 }

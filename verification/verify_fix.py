@@ -1,68 +1,69 @@
-from playwright.sync_api import sync_playwright, expect
-import time
-import re
 
-def verify_mobile_overlap_fix(page):
-    """
-    Verifies that the Info Panel sits ON TOP of the Expedition HUD on mobile.
-    """
-    print("Navigating to app...")
-    page.goto("http://localhost:8080")
+from playwright.sync_api import sync_playwright
 
-    # 1. Dismiss Intro
-    intro = page.locator("#introduction")
-    if intro.is_visible():
-        print("Dismissing intro...")
-        intro.click()
-        expect(intro).to_have_class(re.compile(r"hidden"))
-
-    # 2. Wait for map/markers
-    page.wait_for_selector(".leaflet-marker-icon")
-    print("Map loaded.")
-
-    # 3. Simulate Mobile Viewport
-    page.set_viewport_size({"width": 375, "height": 667})
-    print("Viewport set to iPhone SE size.")
-
-    # 4. Click a marker to open Info Panel
-    markers = page.locator(".leaflet-marker-icon:not(.dimmed)")
-    markers.first.click()
-    print("Marker clicked.")
-
-    # 5. Wait for Info Panel
-    info_panel = page.locator("#info-panel")
-    expect(info_panel).to_have_class(re.compile(r"visible"))
-    print("Info Panel visible.")
-
-    # 6. Add to Expedition (Triggers HUD)
-    add_btn = page.locator("#btn-add-expedition")
-    add_btn.click()
-    print("Added to expedition.")
-
-    # 7. Wait for HUD to appear
-    hud = page.locator("#expedition-hud")
-    expect(hud).to_have_class(re.compile(r"visible"))
-    print("HUD visible.")
-
-    # 8. Take Screenshot of Overlap
-    print("Taking screenshot of overlap state...")
-    # We expect Info Panel to be fully visible and HUD to be behind it (or below it, but they overlap at the bottom on mobile)
-    page.screenshot(path="verification/mobile_overlap.png")
-
-    # 9. Verify Interaction
-    close_btn = page.locator("#close-panel")
-    print("Attempting to click Close Panel button...")
-    close_btn.click(timeout=2000)
-    print("Click successful! Panel was not obscured.")
-
-if __name__ == "__main__":
+def verify_changes():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        try:
-            verify_mobile_overlap_fix(page)
-            print("Verification Complete.")
-        except Exception as e:
-            print(f"Verification Failed: {e}")
-        finally:
-            browser.close()
+
+        # Go to local server
+        page.goto("http://localhost:8080")
+
+        # Click through introduction
+        page.click("#introduction")
+
+        # Wait for map to initialize (simulate-btn exists)
+        page.wait_for_selector(".simulate-btn", state="visible")
+
+        # Check simulate button style (contrast fix)
+        # We can't easily check computed style in screenshot, but we can visually verify
+        page.screenshot(path="verification/simulate_btn_contrast.png")
+
+        # Verify MissionSimulator logic fix by running a simulation
+        # 1. Add targets
+        # Click a marker to open panel
+        # Wait for markers to be interactive
+        page.wait_for_timeout(2000)
+
+        # Click on Great Blue Hole (first marker usually, or find by title)
+        # Markers are divIcons.
+        markers = page.locator(".leaflet-marker-icon")
+        count = markers.count()
+        print(f"Found {count} markers")
+
+        if count > 0:
+            markers.first.click()
+            page.wait_for_selector("#info-panel.visible")
+            page.click("#btn-add-expedition")
+
+            # Close panel
+            page.click("#close-panel")
+            page.wait_for_timeout(500)
+
+            # Click another marker
+            markers.nth(1).click()
+            page.wait_for_selector("#info-panel.visible")
+            page.click("#btn-add-expedition")
+            page.click("#close-panel")
+
+            # Check if Simulate button is visible (it is in HUD)
+            # HUD should be visible
+            page.wait_for_selector("#expedition-hud.visible")
+
+            # Click Simulate
+            page.click("#btn-simulate-mission")
+
+            # Wait for Mission Control
+            page.wait_for_selector("#mission-control.visible")
+
+            # Take screenshot of simulation start
+            page.screenshot(path="verification/simulation_start.png")
+
+            # Wait for logs to appear
+            page.wait_for_timeout(5000)
+            page.screenshot(path="verification/simulation_running.png")
+
+        browser.close()
+
+if __name__ == "__main__":
+    verify_changes()

@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Architecture Hardening: Robustness Check
     if (typeof Overwatch === 'undefined' || typeof TelemetryStream === 'undefined') {
         console.error("CRITICAL: Tactical Modules (Overwatch/Telemetry) failed to initialize. UMD/Global scope mismatch detected.");
-        // We can add a user-facing toast here if desired, but for now we ensure it doesn't crash later.
+        Utils.showToast("WARNING: Tactical Systems Degraded. Some features may be unavailable.", "warning");
     }
 
     // SYSTEM INTEGRITY CHECK
@@ -1022,9 +1022,18 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             img.onerror = () => {
                 if (requestId !== currentImageRequestId) return;
-                // Use the fallback logic
-                panelImage.src = location.image; // Trigger the fallback handler on panelImage
-                panelImage.alt = location.name;
+                // If the optimized image failed, try the original ONLY if different
+                // Otherwise, let the panelImage fallback to SVG
+                if (imageUrl !== location.image) {
+                    panelImage.src = location.image;
+                    panelImage.alt = location.name;
+                } else {
+                     // Directly trigger fallback SVG logic by setting src to something invalid or calling handler?
+                     // panelImage.onerror will handle it if we set it to the failed url again, but that causes loop?
+                     // No, panelImage.onerror sets it to data URI.
+                     // But if we already know it failed...
+                     panelImage.onerror();
+                }
             };
             img.src = imageUrl;
 
