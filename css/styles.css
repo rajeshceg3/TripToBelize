@@ -510,12 +510,12 @@
 
 /* Simulate Button */
 .simulate-btn {
-    background: rgba(255, 215, 0, 0.4); /* Increased opacity for better contrast */
-    border: 2px solid var(--warning-gold); /* Thicker border */
-    color: var(--warning-gold);
+    background: rgba(255, 215, 0, 0.85); /* Considerably increased opacity for better contrast against map */
+    border: 2px solid var(--warning-gold);
+    color: #051621; /* Dark text for contrast against gold background */
     transition: all 0.3s ease;
-    text-shadow: 0 0 5px rgba(0,0,0,0.8);
-    font-weight: 700;
+    font-weight: 800;
+    text-shadow: none;
 }
 
 .simulate-btn:hover {

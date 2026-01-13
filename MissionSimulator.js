@@ -221,11 +221,6 @@
                 this.state.currentPathIndex++;
                 this.state.progressOnLeg = 0;
 
-                // Check if we reached the end of the path
-                if (this.state.currentPathIndex >= this.path.length - 1) {
-                    return false; // Done
-                }
-
                 // --- FIXED: Update Route Index based on path traversal ---
                 // We check if we have passed the path index corresponding to the next target
                 const nextTargetIndex = this.state.currentRouteIndex + 1;
@@ -238,6 +233,11 @@
                         this.onEvent(`Reached Objective: ${nextTargetLoc.name}`, "success");
                         this.state.currentRouteIndex++;
                     }
+                }
+
+                // Check if we reached the end of the path
+                if (this.state.currentPathIndex >= this.path.length - 1) {
+                    return false; // Done
                 }
 
                 // Apply excess distance to the next leg
@@ -358,7 +358,7 @@
 
             const icon = L.divIcon({
                 className: 'sim-unit-marker',
-                html: '<div class="unit-pulse"></div>',
+                html: '<div class="unit-pulse" role="img" aria-label="Mission Unit"></div>',
                 iconSize: [20, 20]
             });
 
