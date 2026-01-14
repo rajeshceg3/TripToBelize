@@ -78,11 +78,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // SYSTEM INTEGRITY CHECK
-    if (typeof locations === 'undefined' || !Array.isArray(locations)) {
+    // Robustness: Check global scope explicitly and handle potential race conditions
+    const getLocations = () => window.locations || (typeof locations !== 'undefined' ? locations : null);
+
+    if (!getLocations() || !Array.isArray(getLocations())) {
         console.error("CRITICAL: Geospatial Data (locations) failed to load.");
+        // Attempt to recover or notify
         Utils.showToast("SYSTEM FAILURE: Geospatial Data Corrupted. Please refresh.", "critical");
+        // In a real scenario, we might retry fetch here.
         return; // Halt execution
     }
+    // Ensure local reference is valid
+    const validLocations = getLocations();
 
     // Initialize Expedition Manager
     const expeditionManager = new ExpeditionManager();
@@ -374,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Show Mission Control
             missionControlPanel.classList.add('visible');
-            mcLogContainer.innerHTML = ''; // Clear logs
+            mcLogContainer.replaceChildren(); // Secure clearing
 
             // Start
             missionSimulator.start(list);
@@ -462,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateExpeditionUI() {
         const list = expeditionManager.getExpedition();
-        expeditionList.innerHTML = '';
+        expeditionList.replaceChildren(); // Secure clearing
 
         if (list.length > 0) {
             expeditionHud.classList.add('visible');
@@ -524,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Preserve selections that are still relevant
         // If a new item appears, it starts unchecked
 
-        gearContainer.innerHTML = '';
+        gearContainer.replaceChildren(); // Secure clearing
 
         if (required.length === 0) {
             const span = document.createElement('span');
@@ -723,7 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
          if (list.length < 2) return;
          expeditionHud.classList.remove('visible');
          missionControlPanel.classList.add('visible');
-         mcLogContainer.innerHTML = '';
+         mcLogContainer.replaceChildren(); // Secure clearing
          missionSimulator.start(list);
          if (!tacticalOverlay.isVisible) {
              tacticalOverlay.show();
@@ -774,8 +781,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openArchives() {
         const scenarios = decisionSupport.getScenarios();
-        archivesList.textContent = ''; // Clear securely
-        archivesDetails.textContent = '';
+        archivesList.replaceChildren(); // Secure clearing
+        archivesDetails.replaceChildren();
         const defaultMsg = document.createElement('span');
         defaultMsg.style.color = 'var(--text-tertiary)';
         defaultMsg.textContent = 'Select a mission profile to analyze.';
@@ -1096,43 +1103,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Archives Focus Trap
+    archivesModal.addEventListener('keydown', (e) => {
+        if (!archivesModal.classList.contains('visible')) return;
+        Utils.handleFocusTrap(e, archivesModal);
+    });
+
     function closeBriefingModal() {
         briefingModal.classList.remove('visible');
         briefingModal.setAttribute('aria-hidden', 'true');
         btnGenerateBrief.focus(); // Restore focus to trigger
     }
 
-    // Modal Focus Trap (Robust)
+    // Modal Focus Trap (Delegated to Utils)
     briefingModal.addEventListener('keydown', (e) => {
         if (!briefingModal.classList.contains('visible')) return;
-
-        // Get focusable elements dynamically as content might change
-        const focusableSelectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
-        const focusableElements = Array.from(briefingModal.querySelectorAll(focusableSelectors));
-
-        if (focusableElements.length === 0) return;
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.key === 'Tab') {
-            if (e.shiftKey) {
-                // Shift + Tab
-                if (document.activeElement === firstElement) {
-                    e.preventDefault();
-                    lastElement.focus();
-                }
-            } else {
-                // Tab
-                if (document.activeElement === lastElement) {
-                    e.preventDefault();
-                    firstElement.focus();
-                }
-            }
-        }
-        if (e.key === 'Escape') {
-            closeBriefingModal();
-        }
+        Utils.handleFocusTrap(e, briefingModal, closeBriefingModal);
     });
 
     // Image error handling

@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <!-- Security: Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://unpkg.com https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://unpkg.com https://*.basemaps.cartocdn.com https://images.unsplash.com; connect-src 'self';">
+    <!-- Security: Content Security Policy - Strict (No unsafe-inline) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' https://unpkg.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://unpkg.com https://*.basemaps.cartocdn.com https://images.unsplash.com; connect-src 'self';">
 
     <title>Belize: An Elemental Journey</title>
     
@@ -46,7 +46,7 @@
             <button class="filter-btn" data-filter="marine" aria-pressed="false">Marine</button>
         </div>
         <button id="tactical-toggle" class="glass-panel btn-reset" aria-pressed="false" aria-label="Toggle Tactical Mode">
-            <div class="toggle-icon"></div>
+            <div class="toggle-icon" aria-hidden="true"></div>
             <span>Tactical Mode</span>
         </button>
     </div>
@@ -68,7 +68,8 @@
             <div class="meta-row">
                 <div class="meta-item">
                     <span class="meta-label">Risk Level</span>
-                    <span class="meta-val" style="color: var(--danger-red)">CRITICAL</span>
+                    <!-- Color set by JS -->
+                    <span class="meta-val">CRITICAL</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Access</span>
@@ -77,7 +78,7 @@
             </div>
 
             <p id="panel-description">Description goes here.</p>
-            <div id="panel-atmosphere" style="font-style: italic; color: var(--text-tertiary); margin-bottom: 24px; border-left: 2px solid var(--glow-cyan); padding-left: 12px;"></div>
+            <div id="panel-atmosphere" class="panel-atmosphere-text"></div>
 
             <button id="btn-add-expedition" class="btn-reset">Initialize Target</button>
         </div>
@@ -91,16 +92,16 @@
         </div>
 
         <div class="hud-stats">
-            <span style="font-size: 0.8rem; color: var(--text-secondary);">Risk Profile</span>
-            <span id="risk-display" class="risk-badge" style="color: var(--glow-cyan)">LOW</span>
+            <span class="risk-text-sm">Risk Profile</span>
+            <span id="risk-display" class="risk-badge">LOW</span>
         </div>
 
         <div id="expedition-list">
             <!-- Items injected here -->
         </div>
 
-        <div style="margin: 20px 0 10px 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
-            <span style="font-size: 0.7rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; display:block; margin-bottom: 10px;">Required Loadout</span>
+        <div class="section-divider">
+            <span class="section-header-text">Required Loadout</span>
             <div id="gear-container" class="gear-grid">
                 <!-- Gear items injected here -->
             </div>
@@ -129,14 +130,15 @@
                 </div>
                 <div class="bar-wrap">
                     <div class="bar-meta"><span>Fatigue</span><span id="val-fatigue">0%</span></div>
-                    <div class="bar-track"><div id="bar-fatigue" class="bar-fill" style="background: var(--danger-red); width: 0%;"></div></div>
+                    <!-- Width set by JS -->
+                    <div class="bar-track"><div id="bar-fatigue" class="bar-fill"></div></div>
                 </div>
             </div>
             <div id="mc-log-container" class="log-container" aria-live="polite" role="log"></div>
         </div>
-        <div style="padding: 16px 24px; border-top: 1px solid var(--glass-border); display: flex; justify-content: flex-end; gap: 12px;">
-            <button id="btn-mc-pause" class="btn-action" style="width: auto; padding: 8px 20px; font-size: 0.8rem;">Pause</button>
-            <button id="btn-mc-abort" class="btn-action secondary" style="width: auto; padding: 8px 20px; font-size: 0.8rem;">Abort</button>
+        <div class="mc-controls-container">
+            <button id="btn-mc-pause" class="btn-action btn-mc">Pause</button>
+            <button id="btn-mc-abort" class="btn-action secondary btn-mc">Abort</button>
         </div>
     </div>
 
@@ -156,13 +158,13 @@
                 </div>
                 <div class="brief-text">
                     <p id="brief-text">Calculating...</p>
-                    <div id="brief-warnings" style="color: var(--danger-red); font-weight: 700; margin-top: 10px; display: none;"></div>
-                    <span id="brief-count" style="display:none"></span>
-                    <span id="brief-risk" style="display:none"></span>
+                    <div id="brief-warnings" class="brief-warnings-box"></div>
+                    <span id="brief-count" class="hidden"></span>
+                    <span id="brief-risk" class="hidden"></span>
                 </div>
-                <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-                     <button id="btn-save-scenario" class="btn-action secondary" style="width: auto; margin:0;">Save to Archives</button>
-                     <button id="btn-brief-execute" class="btn-action" style="width: auto; margin:0;">Execute</button>
+                <div class="brief-actions-container">
+                     <button id="btn-save-scenario" class="btn-action secondary btn-brief-action">Save to Archives</button>
+                     <button id="btn-brief-execute" class="btn-action btn-brief-action">Execute</button>
                 </div>
             </div>
         </div>
@@ -170,16 +172,16 @@
 
     <!-- Tactical Archives Modal -->
     <div id="archives-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="archives-title">
-        <div class="modal-card" style="width: 100%; max-width: 800px; height: 600px; display: flex; flex-direction: column;">
+        <div class="modal-card archives-modal-card">
             <button id="close-archives" class="close-modal-btn" aria-label="Close Archives">&times;</button>
             <div class="modal-header">
                 <h2 id="archives-title">Tactical Archives</h2>
             </div>
-            <div class="modal-body" style="display: flex; gap: 24px; flex: 1; min-height: 0;">
-                <div id="archives-list" class="archives-list" style="flex: 1; overflow-y: auto; padding-right: 12px; border-right: 1px solid rgba(255,255,255,0.1);">
+            <div class="modal-body archives-body">
+                <div id="archives-list" class="archives-list">
                     <!-- Dynamic List -->
                 </div>
-                <div id="archives-details" class="archives-details" style="flex: 1.5; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                <div id="archives-details" class="archives-details">
                     <span style="color: var(--text-tertiary);">Select a mission profile to analyze.</span>
                 </div>
             </div>
