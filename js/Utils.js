@@ -54,6 +54,42 @@
         },
 
         /**
+         * Manages focus trapping within a modal element.
+         * @param {KeyboardEvent} e - The keydown event.
+         * @param {HTMLElement} modal - The modal container.
+         * @param {Function} [closeCallback] - Optional callback to close modal on Escape.
+         */
+        handleFocusTrap: function(e, modal, closeCallback) {
+            const focusableSelectors = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
+            const focusableElements = Array.from(modal.querySelectorAll(focusableSelectors));
+
+            if (focusableElements.length === 0) return;
+
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    // Shift + Tab
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    // Tab
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
+
+            if (e.key === 'Escape' && closeCallback) {
+                closeCallback();
+            }
+        },
+
+        /**
          * Displays a tactical notification (Toast).
          * @param {string} message
          * @param {string} type - 'info', 'warning', 'critical', 'success'

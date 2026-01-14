@@ -188,3 +188,6 @@ window.locations = [
 
 // Fallback for older patterns
 const locations = window.locations;
+
+// SIGNAL: Inform the application that intelligence data has arrived.
+document.dispatchEvent(new CustomEvent('locationsLoaded'));
