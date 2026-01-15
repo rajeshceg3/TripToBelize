@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Resume automatically or wait?
                     // overwatch.executeReroute leaves it paused.
                     setTimeout(() => {
-                            missionSimulator.pause(); // Toggle back to running
+                        missionSimulator.resume(); // Explicitly resume
                     }, 1000);
                 }, 1500);
             }
@@ -398,7 +398,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         btnMcPause.addEventListener('click', () => {
-            missionSimulator.pause();
+            if (missionSimulator.state.status === 'RUNNING') {
+                missionSimulator.pause();
+            } else if (missionSimulator.state.status === 'PAUSED') {
+                missionSimulator.resume();
+            }
             btnMcPause.textContent = missionSimulator.state.status === 'PAUSED' ? "Resume" : "Pause";
         });
 
@@ -477,6 +481,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             expeditionHud.classList.remove('visible');
             expeditionCount.textContent = '0 Targets';
+        }
+
+        // UX: Disable simulate if insufficient targets
+        if (list.length < 2) {
+             btnSimulateMission.disabled = true;
+             btnSimulateMission.setAttribute('aria-disabled', 'true');
+             btnSimulateMission.style.opacity = '0.5';
+             btnSimulateMission.style.cursor = 'not-allowed';
+             btnSimulateMission.title = "Minimum 2 targets required";
+        } else {
+             btnSimulateMission.disabled = false;
+             btnSimulateMission.setAttribute('aria-disabled', 'false');
+             btnSimulateMission.style.opacity = '1';
+             btnSimulateMission.style.cursor = 'pointer';
+             btnSimulateMission.title = "Start Mission Simulation";
         }
 
         list.forEach(loc => {
@@ -1013,7 +1032,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (imageUrl.includes('&w=')) {
                     imageUrl = imageUrl.replace(/&w=\d+/, `&w=${width}`);
                 } else {
-                    imageUrl += `&w=${width}`;
+                    // Safe append check
+                    const separator = imageUrl.includes('?') ? '&' : '?';
+                    imageUrl += `${separator}w=${width}`;
                 }
             }
 

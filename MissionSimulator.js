@@ -141,7 +141,11 @@
                 this.state.status = 'PAUSED';
                 clearTimeout(this.timer);
                 this.onEvent("Simulation Paused.", "warning");
-            } else if (this.state.status === 'PAUSED') {
+            }
+        }
+
+        resume() {
+            if (this.state.status === 'PAUSED') {
                 this.state.status = 'RUNNING';
                 this.onEvent("Simulation Resumed.", "info");
                 this.tick();
