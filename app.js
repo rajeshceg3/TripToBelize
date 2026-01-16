@@ -101,13 +101,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Create Archives Button dynamically
     const archivesButton = document.createElement('button');
-    archivesButton.className = 'filter-btn';
+    archivesButton.className = 'filter-btn archives-btn';
     archivesButton.textContent = 'Archives';
-    archivesButton.style.marginLeft = '12px';
-    archivesButton.style.borderLeft = '1px solid rgba(255,255,255,0.1)';
-    archivesButton.style.paddingLeft = '16px';
     archivesButton.setAttribute('aria-label', 'Open Tactical Archives');
     filterContainer.appendChild(archivesButton);
+
+    // Archives System Integration
+    const archivesModal = document.getElementById('archives-modal');
+    const closeArchives = document.getElementById('close-archives');
+    const archivesList = document.getElementById('archives-list');
+    const archivesDetails = document.getElementById('archives-details');
+
+    // Defer initialization to ensure DOM and classes are ready
+    let archivesSystem;
+    if (typeof ArchivesSystem !== 'undefined') {
+        archivesSystem = new ArchivesSystem(decisionSupport, expeditionManager, {
+            modal: archivesModal,
+            list: archivesList,
+            details: archivesDetails,
+            openBtn: archivesButton,
+            closeBtn: closeArchives
+        });
+    } else {
+        console.error("ArchivesSystem module failed to load.");
+    }
+
+    // Listen for Gear Restoration from Archives
+    window.addEventListener('restoreGear', (e) => {
+        selectedGear = [...e.detail.gear];
+        updateExpeditionUI();
+    });
 
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -484,17 +507,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // UX: Disable simulate if insufficient targets
+        // REFACTOR: Keep button enabled to allow feedback toast on click
         if (list.length < 2) {
-             btnSimulateMission.disabled = true;
              btnSimulateMission.setAttribute('aria-disabled', 'true');
-             btnSimulateMission.style.opacity = '0.5';
-             btnSimulateMission.style.cursor = 'not-allowed';
+             btnSimulateMission.style.opacity = '0.7';
              btnSimulateMission.title = "Minimum 2 targets required";
         } else {
-             btnSimulateMission.disabled = false;
              btnSimulateMission.setAttribute('aria-disabled', 'false');
              btnSimulateMission.style.opacity = '1';
-             btnSimulateMission.style.cursor = 'pointer';
              btnSimulateMission.title = "Start Mission Simulation";
         }
 
@@ -775,202 +795,8 @@ document.addEventListener('DOMContentLoaded', () => {
         closeBriefingModal();
     });
 
-    // Archives Modal Logic
-    const archivesModal = document.getElementById('archives-modal');
-    const closeArchives = document.getElementById('close-archives');
-    const archivesList = document.getElementById('archives-list');
-    const archivesDetails = document.getElementById('archives-details');
-
-    archivesButton.addEventListener('click', () => {
-        openArchives();
-    });
-
-    closeArchives.addEventListener('click', () => {
-        archivesModal.classList.remove('visible');
-        archivesModal.setAttribute('aria-hidden', 'true');
-    });
-
-    // Close on click outside
-    archivesModal.addEventListener('click', (e) => {
-        if (e.target === archivesModal) {
-            archivesModal.classList.remove('visible');
-            archivesModal.setAttribute('aria-hidden', 'true');
-        }
-    });
-
-    function openArchives() {
-        const scenarios = decisionSupport.getScenarios();
-        archivesList.replaceChildren(); // Secure clearing
-        archivesDetails.replaceChildren();
-        const defaultMsg = document.createElement('span');
-        defaultMsg.style.color = 'var(--text-tertiary)';
-        defaultMsg.textContent = 'Select a mission profile to analyze.';
-        archivesDetails.appendChild(defaultMsg);
-
-        if (scenarios.length === 0) {
-            const emptyMsg = document.createElement('div');
-            emptyMsg.style.padding = '20px';
-            emptyMsg.style.color = 'var(--text-tertiary)';
-            emptyMsg.textContent = 'No archives found.';
-            archivesList.appendChild(emptyMsg);
-        } else {
-            scenarios.forEach(s => {
-                const item = document.createElement('div');
-                item.className = 'target-row'; // Reuse style
-                item.style.cursor = 'pointer';
-                item.style.marginBottom = '8px';
-
-                const date = new Date(s.timestamp).toLocaleDateString();
-
-                const contentDiv = document.createElement('div');
-                contentDiv.style.display = 'flex';
-                contentDiv.style.flexDirection = 'column';
-
-                const nameSpan = document.createElement('span');
-                nameSpan.style.color = 'var(--glow-cyan)';
-                nameSpan.style.fontWeight = '600';
-                nameSpan.textContent = s.name; // Secure text content
-
-                const metaSpan = document.createElement('span');
-                metaSpan.style.fontSize = '0.75rem';
-                metaSpan.style.color = 'var(--text-tertiary)';
-                metaSpan.textContent = `${date} • ${s.analysis.riskLabel}`;
-
-                contentDiv.appendChild(nameSpan);
-                contentDiv.appendChild(metaSpan);
-
-                const arrowDiv = document.createElement('div');
-                arrowDiv.style.fontSize = '1.2rem';
-                arrowDiv.textContent = '›';
-
-                item.appendChild(contentDiv);
-                item.appendChild(arrowDiv);
-
-                item.addEventListener('click', () => showArchiveDetails(s));
-                archivesList.appendChild(item);
-            });
-        }
-
-        archivesModal.classList.add('visible');
-        archivesModal.setAttribute('aria-hidden', 'false');
-    }
-
-    function showArchiveDetails(scenario) {
-        const a = scenario.analysis;
-
-        // Securely build the DOM instead of using innerHTML with user input
-        archivesDetails.textContent = ''; // Clear existing
-
-        const title = document.createElement('h3');
-        title.style.cssText = "font-family: var(--font-display); color: var(--glow-cyan); font-size: 1.5rem; margin-bottom: 5px;";
-        title.textContent = scenario.name;
-
-        const uuid = document.createElement('div');
-        uuid.style.cssText = "font-size: 0.8rem; color: var(--text-tertiary); margin-bottom: 24px;";
-        uuid.textContent = `UUID: ${scenario.id.substring(0,8)}...`;
-
-        const grid = document.createElement('div');
-        grid.style.cssText = "display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; margin-bottom: 24px;";
-
-        const createCard = (label, val, color = null) => {
-            const card = document.createElement('div');
-            card.style.cssText = "background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;";
-            const l = document.createElement('span');
-            l.style.cssText = "display:block; font-size:0.7rem; color:var(--text-tertiary);";
-            l.textContent = label;
-            const v = document.createElement('span');
-            v.style.cssText = `font-size:1.2rem; font-family:var(--font-display);${color ? ' color:'+color : ''}`;
-            v.textContent = val;
-            card.appendChild(l);
-            card.appendChild(v);
-            return card;
-        };
-
-        grid.appendChild(createCard("DURATION", `${Math.floor(a.durationHours)}h ${Math.round((a.durationHours%1)*60)}m`));
-        grid.appendChild(createCard("RISK SCORE", `${a.riskScore}/100`, a.riskColor));
-
-        const metrics = document.createElement('div');
-        metrics.style.cssText = "width: 100%; text-align: left; margin-bottom: 24px;";
-
-        const metricTitle = document.createElement('span');
-        metricTitle.style.cssText = "font-size:0.8rem; color:var(--text-secondary); margin-bottom:8px; display:block;";
-        metricTitle.textContent = "PREDICTED RESOURCE DRAIN";
-        metrics.appendChild(metricTitle);
-
-        const createBar = (label, val, color) => {
-            const wrap = document.createElement('div');
-            wrap.style.marginBottom = "8px";
-
-            const meta = document.createElement('div');
-            meta.style.cssText = "display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px;";
-            const l = document.createElement('span'); l.textContent = label;
-            const v = document.createElement('span'); v.textContent = `${val}%`;
-            meta.appendChild(l); meta.appendChild(v);
-
-            const track = document.createElement('div');
-            track.style.cssText = "height:4px; background:rgba(255,255,255,0.1); border-radius:99px;";
-            const fill = document.createElement('div');
-            fill.style.cssText = `width:${Math.min(val, 100)}%; background:${color}; height:100%;`;
-            track.appendChild(fill);
-
-            wrap.appendChild(meta);
-            wrap.appendChild(track);
-            return wrap;
-        };
-
-        metrics.appendChild(createBar("Supplies", a.predictedSupplies, "var(--glow-cyan)"));
-        metrics.appendChild(createBar("Fatigue", a.predictedFatigue, "var(--warning-gold)"));
-
-        const btnGroup = document.createElement('div');
-        btnGroup.style.cssText = "display: flex; gap: 12px; width: 100%;";
-
-        const loadBtn = document.createElement('button');
-        loadBtn.className = "btn-action";
-        loadBtn.textContent = "Load & Deploy";
-        loadBtn.addEventListener('click', () => {
-            loadScenarioIntoExpedition(scenario);
-            archivesModal.classList.remove('visible');
-            archivesModal.setAttribute('aria-hidden', 'true');
-        });
-
-        const delBtn = document.createElement('button');
-        delBtn.className = "btn-action secondary";
-        delBtn.style.cssText = "border: 1px solid var(--danger-red); color: var(--danger-red);";
-        delBtn.textContent = "Delete";
-        delBtn.addEventListener('click', () => {
-            if(confirm('Confirm deletion of tactical record?')) {
-                decisionSupport.deleteScenario(scenario.id);
-                openArchives();
-            }
-        });
-
-        btnGroup.appendChild(loadBtn);
-        btnGroup.appendChild(delBtn);
-
-        archivesDetails.appendChild(title);
-        archivesDetails.appendChild(uuid);
-        archivesDetails.appendChild(grid);
-        archivesDetails.appendChild(metrics);
-        archivesDetails.appendChild(btnGroup);
-    }
-
-    function loadScenarioIntoExpedition(scenario) {
-        // Clear current
-        expeditionManager.clear();
-
-        // Restore locations (Sequentially to maintain order)
-        // We have the raw location objects in scenario.locations.
-        // ExpeditionManager.addLocation expects a location object.
-        scenario.locations.forEach(loc => {
-            expeditionManager.addLocation(loc);
-        });
-
-        // Restore gear
-        selectedGear = [...scenario.gear];
-        updateExpeditionUI(); // This will re-render checkboxes based on selectedGear global
-
-        Utils.showToast(`Mission Profile "${scenario.name}" Loaded.`, "success");
-    }
+    // Archives Focus Trap (Delegated to ArchivesSystem but we might have a listener here still)
+    // Removed duplicate listeners as ArchivesSystem handles them now.
 
     // --- EXPEDITION LOGIC END ---
 
