@@ -27,7 +27,7 @@
             --font-display: 'Space Grotesk', monospace;
             --text-primary: #e6f1f5;
             --text-secondary: #b0c4de;
-            --text-tertiary: #8fa0bc;
+            --text-tertiary: #a0b0d0;
 
             /* Motion */
             --ease-fluid: cubic-bezier(0.2, 0.0, 0.2, 1.0); /* Fluid ease-out */
@@ -626,4 +626,108 @@
     justify-content: center;
     align-items: center;
     text-align: center;
+}
+
+/* --- ARCHIVES & DYNAMIC CLASSES --- */
+.text-tertiary { color: var(--text-tertiary); }
+.text-secondary { color: var(--text-secondary); }
+.text-cyan { color: var(--glow-cyan); }
+.font-display { font-family: var(--font-display); }
+.font-bold { font-weight: 600; }
+
+.archives-btn {
+    margin-left: 12px;
+    border-left: 1px solid rgba(255,255,255,0.1);
+    padding-left: 16px;
+}
+
+.archives-details-title {
+    font-family: var(--font-display);
+    color: var(--glow-cyan);
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.archives-uuid {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    margin-bottom: 24px;
+}
+
+.archives-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.archives-card {
+    background: rgba(255,255,255,0.05);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.archives-card-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+}
+
+.archives-card-value {
+    font-size: 1.2rem;
+    font-family: var(--font-display);
+}
+
+.archives-metrics {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.archives-metric-title {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.archives-metric-wrap {
+    margin-bottom: 8px;
+}
+
+.archives-metric-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+
+.archives-metric-track {
+    height: 4px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 99px;
+}
+
+.archives-metric-fill {
+    height: 100%;
+}
+
+.archives-btn-group {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.archives-btn-delete {
+    border: 1px solid var(--danger-red);
+    color: var(--danger-red);
+}
+
+.panel-atmosphere-text {
+    font-style: italic;
+    color: var(--text-tertiary);
+    margin-bottom: 24px;
+    border-left: 2px solid var(--glow-cyan);
+    padding-left: 12px;
 }
