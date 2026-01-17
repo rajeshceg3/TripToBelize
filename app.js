@@ -507,14 +507,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // UX: Disable simulate if insufficient targets
-        // REFACTOR: Keep button enabled to allow feedback toast on click
+        // REFACTOR: Keep button enabled to allow feedback toast on click, but visually indicate invalid state
         if (list.length < 2) {
              btnSimulateMission.setAttribute('aria-disabled', 'true');
-             btnSimulateMission.style.opacity = '0.7';
+             btnSimulateMission.style.opacity = '0.5';
+             btnSimulateMission.style.cursor = 'not-allowed';
+             btnSimulateMission.style.borderColor = 'var(--text-tertiary)';
              btnSimulateMission.title = "Minimum 2 targets required";
         } else {
              btnSimulateMission.setAttribute('aria-disabled', 'false');
              btnSimulateMission.style.opacity = '1';
+             btnSimulateMission.style.cursor = 'pointer';
+             btnSimulateMission.style.borderColor = ''; // Reset to default
              btnSimulateMission.title = "Start Mission Simulation";
         }
 
