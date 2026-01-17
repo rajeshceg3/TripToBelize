@@ -186,6 +186,11 @@ window.locations = [
     }
 ];
 
+// Security Hardening: Immutable Data
+// Prevent runtime tampering of tactical data
+window.locations.forEach(loc => Object.freeze(loc));
+Object.freeze(window.locations);
+
 // Fallback for older patterns
 const locations = window.locations;
 

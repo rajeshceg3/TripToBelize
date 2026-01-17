@@ -120,8 +120,8 @@
             while (!openSet.isEmpty()) {
                 iters++;
                 if (iters > maxIters) {
-                    console.warn("Pathfinding timed out, reverting to direct route.");
-                    return [start, end];
+                    console.warn("StrategicPathfinder: Calculation timed out. Complexity exceeds safety thresholds.");
+                    return null; // Explicit failure instead of dangerous straight line
                 }
 
                 const current = openSet.dequeue();
@@ -158,7 +158,7 @@
                 }
             }
 
-            return [start, end]; // Fallback
+            return null; // No path found
         }
 
         getNeighbors(coords) {

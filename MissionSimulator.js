@@ -98,11 +98,17 @@
                  this.path = [];
                  // First point is start
                  this.path.push(locations[0].coords);
+                 let pathfindingFailed = false;
 
                  for(let i=0; i<locations.length-1; i++) {
                      const start = locations[i].coords;
                      const end = locations[i+1].coords;
                      const segmentPath = this.pathfinder.findPath(start, end);
+
+                     if (!segmentPath) {
+                         pathfindingFailed = true;
+                         break;
+                     }
 
                      // Remove the first point of the segment as it duplicates the current last point
                      segmentPath.shift();
@@ -111,7 +117,15 @@
                      // The last point added corresponds to locations[i+1]
                      this.routeIndices.push(this.path.length - 1);
                  }
-                 this.onEvent("Strategic Route Optimized. Avoiding High-Risk Zones.", "info");
+
+                 if (pathfindingFailed) {
+                     this.onEvent("WARNING: Tactical Pathing Failed. Engaging Direct Air Route (Risk: HIGH).", "critical");
+                     // Fallback to straight lines
+                     this.path = locations.map(l => l.coords);
+                     this.routeIndices = locations.map((_, i) => i);
+                 } else {
+                     this.onEvent("Strategic Route Optimized. Avoiding High-Risk Zones.", "info");
+                 }
             } else {
                 // Fallback to straight lines (just the key locations)
                 this.path = locations.map(l => l.coords);

@@ -71,14 +71,15 @@
         }
 
         .leaflet-tile-pane {
-            filter: grayscale(1) brightness(0.25) invert(0) sepia(0.2) hue-rotate(190deg) saturate(1.5) contrast(1.1);
+            /* A11y Fix: Increased brightness from 0.25 to 0.5 for better visibility */
+            filter: grayscale(1) brightness(0.5) invert(0) sepia(0.2) hue-rotate(190deg) saturate(1.5) contrast(1.1);
             transition: filter 1s var(--ease-fluid);
         }
 
         /* Tactical Mode: High Contrast, Green tint */
         #map.tactical-mode-active .leaflet-tile-pane {
             /* Adjusted for better legibility - less saturation, slightly brighter */
-            filter: grayscale(1) brightness(0.4) sepia(0.8) hue-rotate(90deg) saturate(1.5) contrast(1.2);
+            filter: grayscale(1) brightness(0.6) sepia(0.8) hue-rotate(90deg) saturate(1.5) contrast(1.2);
         }
 
         /* Markers */

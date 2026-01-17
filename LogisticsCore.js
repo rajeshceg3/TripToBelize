@@ -145,31 +145,43 @@
          * @returns {Object} - { supplies: number, fatigue: number, integrity: number }
          */
         estimateMissionCost(locations, totalDistance) {
-            const totalHours = this.calculateDurationHours(locations, totalDistance);
+            // FIX: Separate travel time from stop overhead to prevent over-draining resources
+            // calculateDurationHours includes stop overhead. We need to strip it out for travel calculation.
+            const totalDuration = this.calculateDurationHours(locations, totalDistance);
+            const stopOverheadHours = Math.max(0, (locations.length - 2) * 1.5);
+            const travelHours = Math.max(0, totalDuration - stopOverheadHours);
 
-            // Calculate average terrain drain
-            // We simulate the route by averaging the terrain types
             let totalSupplies = 0;
             let totalFatigue = 0;
             let totalIntegrity = 0;
 
             if (locations.length < 2) return { supplies: 0, fatigue: 0, integrity: 0 };
 
-            // Approximate the time spent in each leg
-            // Simplified: Divide total time by number of legs
             const legs = locations.length - 1;
-            const hoursPerLeg = totalHours / legs;
+            const travelHoursPerLeg = travelHours / legs;
 
             for (let i = 0; i < legs; i++) {
-                // Use the destination terrain for the leg (conservative estimate)
+                // 1. Travel Drain
                 const targetLoc = locations[i+1];
                 const type = targetLoc.type_category || 'other';
 
-                const drain = this.calculateResourceDrain(type, hoursPerLeg);
+                const drain = this.calculateResourceDrain(type, travelHoursPerLeg);
 
                 totalSupplies += drain.supplies;
                 totalFatigue += drain.fatigue;
                 totalIntegrity += drain.integrity;
+
+                // 2. Stop Drain (Resting)
+                // If this is an intermediate stop (not the final destination)
+                if (i < legs - 1) {
+                    // Resting burns minimal resources (0.1x multiplier)
+                    // Base rates: Supplies 2.0, Fatigue 1.5, Integrity 0.5
+                    const restHours = 1.5;
+                    totalSupplies += (2.0 * 0.1 * restHours);
+                    totalFatigue += (1.5 * 0.1 * restHours); // Resting accumulates little fatigue, maybe should reduce?
+                    // For now, we just reduce the drain significantly.
+                    totalIntegrity += (0.5 * 0.0 * restHours); // Integrity doesn't drop while resting
+                }
             }
 
             return {
