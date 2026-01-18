@@ -87,4 +87,38 @@ describe('MissionSimulator [Integration]', () => {
         expect(simulator.state.status).toBe('COMPLETED');
         expect(simulator.onComplete).toHaveBeenCalledWith(true);
     });
+
+    test('should handle rerouting with new route indices', () => {
+        const locations = [
+            { coords: [0, 0], name: 'Start' },
+            { coords: [0, 10], name: 'Target 1' },
+            { coords: [0, 20], name: 'Target 2' }
+        ];
+
+        simulator.start(locations);
+
+        // Simulate some progress
+        simulator.tick();
+
+        // Reroute
+        const newPath = [
+            [0, 5], // Current pos (simulated)
+            [5, 10], // Detour
+            [0, 10], // Target 1
+            [0, 20]  // Target 2
+        ];
+
+        // Construct mock indices:
+        // Index 0: Start (ignored now)
+        // Index 1: Target 1 is at index 2 in newPath
+        // Index 2: Target 2 is at index 3 in newPath
+        const newIndices = [-1, 2, 3];
+
+        simulator.updatePath(newPath, newIndices);
+
+        expect(simulator.path).toEqual(newPath);
+        expect(simulator.routeIndices).toEqual(newIndices);
+        expect(simulator.onEvent).toHaveBeenCalledWith("Course Correction Applied.", "warning");
+        expect(simulator.state.currentPathIndex).toBe(0);
+    });
 });

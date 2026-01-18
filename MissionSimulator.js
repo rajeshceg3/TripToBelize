@@ -75,8 +75,11 @@
          * Updates the current path dynamically (e.g. for rerouting).
          * @param {Array} newPath - Array of coordinates
          */
-        updatePath(newPath) {
+        updatePath(newPath, newRouteIndices) {
             this.path = newPath;
+            if (newRouteIndices) {
+                this.routeIndices = newRouteIndices;
+            }
             this.state.currentPathIndex = 0; // Reset index for new path
             this.state.progressOnLeg = 0;
             this.onEvent("Course Correction Applied.", "warning");
