@@ -103,7 +103,11 @@
                 localStorage.setItem(this.storageKey, JSON.stringify(data));
             } catch (e) {
                 console.error("Failed to save to storage", e);
-                alert("Storage limit reached. Cannot save tactical data.");
+                if (typeof Utils !== 'undefined') {
+                    Utils.showToast("Storage limit reached. Cannot save tactical data.", "critical");
+                } else {
+                    console.warn("Storage limit reached.");
+                }
             }
         }
 

@@ -181,11 +181,44 @@ class ArchivesSystem {
         const delBtn = document.createElement('button');
         delBtn.className = "btn-action secondary archives-btn-delete";
         delBtn.textContent = "Delete";
-        delBtn.addEventListener('click', () => {
-            if(confirm('Confirm deletion of tactical record?')) {
+
+        // UX Improvement: Non-blocking confirmation
+        let confirmState = false;
+        let confirmTimeout = null;
+
+        delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!confirmState) {
+                confirmState = true;
+                delBtn.textContent = "Confirm?";
+                delBtn.style.backgroundColor = "rgba(255, 82, 82, 0.2)";
+                delBtn.style.color = "#ff5252";
+
+                // Reset after 3 seconds
+                confirmTimeout = setTimeout(() => {
+                    confirmState = false;
+                    delBtn.textContent = "Delete";
+                    delBtn.style.backgroundColor = ""; // Reset to CSS default
+                    delBtn.style.color = "";
+                }, 3000);
+            } else {
+                // Execute Deletion
+                clearTimeout(confirmTimeout);
                 this.decisionSupport.deleteScenario(scenario.id);
+                Utils.showToast("Tactical Record Deleted.", "info");
                 this.open(); // Refresh list
             }
+        });
+
+        // Reset on blur to prevent accidental clicks later
+        delBtn.addEventListener('blur', () => {
+             // Delay slightly to allow click to register
+             setTimeout(() => {
+                 confirmState = false;
+                 delBtn.textContent = "Delete";
+                 delBtn.style.backgroundColor = "";
+                 delBtn.style.color = "";
+             }, 200);
         });
 
         btnGroup.appendChild(loadBtn);

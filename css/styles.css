@@ -71,8 +71,8 @@
         }
 
         .leaflet-tile-pane {
-            /* A11y Fix: Increased brightness from 0.25 to 0.5 for better visibility */
-            filter: grayscale(1) brightness(0.5) invert(0) sepia(0.2) hue-rotate(190deg) saturate(1.5) contrast(1.1);
+            /* A11y Fix: Increased brightness to 0.6 for better visibility */
+            filter: grayscale(1) brightness(0.6) invert(0) sepia(0.2) hue-rotate(190deg) saturate(1.5) contrast(1.1);
             transition: filter 1s var(--ease-fluid);
         }
 
